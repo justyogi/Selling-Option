@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sellable Options Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  :root{
+    --navy:#1d2033; --magenta:#d4246f; --magenta-d:#b81c5f; --cyan:#1ba8d8; --cyan-l:#29b6e3;
+    --green:#16a34a; --green-d:#12873d; --red:#e5484d; --orange:#b25b12; --text:#1f2430; --muted:#7a8191;
+    --line:#e4e7ec; --input:#d6dae1; --bg:#f2f3f5; --soft:#eef0f3; --focus:#eaf6fc;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:13px;color:var(--text);background:var(--bg);min-width:1240px}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+  input,select{font-family:inherit;font-size:13px;color:var(--text)}
+  .muted{color:var(--muted)}
+  [hidden]{display:none!important}
+
+  /* top nav */
+  .topnav{height:46px;background:var(--navy);color:#fff;display:flex;align-items:center;padding:0 20px}
+  .brand{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:600;padding-right:20px;margin-right:22px;border-right:1px solid #3b3f57;height:26px}
+  .brand i{color:var(--cyan-l);font-size:20px}
+  .nav{display:flex;gap:26px;height:100%}
+  .nav a{color:#e3e5ee;text-decoration:none;font-weight:500;font-size:13.5px;display:flex;align-items:center;border-bottom:2px solid transparent;cursor:pointer}
+  .nav a.on{border-bottom-color:var(--cyan-l);color:#fff}
+  .nav-r{margin-left:auto;display:flex;align-items:center;gap:18px;font-size:16px;color:#e3e5ee}
+  .bell{position:relative}
+  .bell b{position:absolute;top:-5px;right:-8px;background:var(--red);color:#fff;font-size:9px;border-radius:8px;padding:0 4px;font-weight:600}
+  .user{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+  .avatar{width:26px;height:26px;border-radius:50%;background:#c9cdd8;color:var(--navy);display:grid;place-items:center;font-weight:700;font-size:10.5px}
+  .crumb{padding:13px 20px;color:var(--muted)}
+  .crumb b{color:var(--text);font-weight:600}
+
+  /* buttons */
+  .btn{border-radius:4px;padding:8px 14px;border:1px solid transparent;font-weight:500;display:inline-flex;align-items:center;gap:8px;background:#fff;line-height:1.2}
+  .btn-mag{background:var(--magenta);color:#fff}
+  .btn-mag:hover{background:var(--magenta-d)}
+  .btn-out{border-color:var(--magenta);color:var(--magenta)}
+  .btn-out:hover{background:#fdf1f6}
+  .btn-green{background:var(--green);color:#fff;padding:8px 24px}
+  .btn-green:hover{background:var(--green-d)}
+  .btn-ghost{border-color:var(--input);color:#6b7280;padding:8px 18px}
+  .btn-ghost:hover{background:var(--soft)}
+  .btn-red{background:var(--red);color:#fff;padding:8px 18px}
+  .icon-sq{width:34px;height:34px;justify-content:center;padding:0;border-color:var(--magenta);color:var(--magenta)}
+
+  /* job page */
+  .page{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;padding:0 20px 20px}
+  .jobhead{background:var(--cyan-l);color:#fff;border-radius:8px;padding:16px 20px;display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px 24px;align-items:center}
+  .jobhead h2{margin:0;font-size:19px;font-weight:600}
+  .jh-field{display:flex;align-items:center;gap:10px}
+  .jh-field label{opacity:.9;font-weight:500;white-space:nowrap;min-width:86px}
+  .jh-input{flex:1;border:1px solid rgba(255,255,255,.75);border-radius:4px;padding:7px 10px;color:#fff;background:transparent;font-size:12.5px;outline:0}
+  select.jh-input option{color:var(--text)}
+  .toolbar{display:flex;align-items:center;gap:10px;padding:14px 0 10px;position:relative}
+  .tb-r{margin-left:auto;display:flex;gap:10px}
+  .menu{position:absolute;top:52px;left:0;width:290px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 30px rgba(20,24,40,.14);z-index:30;display:none;padding:8px 0}
+  .menu.open{display:block}
+  .menu-search{display:flex;align-items:center;gap:10px;padding:2px 12px 8px}
+  .menu-search .s{flex:1;display:flex;align-items:center;border:1px solid var(--input);border-radius:4px;padding:6px 8px;gap:6px;color:var(--muted)}
+  .menu-search input{border:0;outline:0;flex:1;min-width:0}
+  .menu-search span{white-space:nowrap;color:#4b5262}
+  .menu-item{padding:8px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+  .menu-item:hover{background:var(--soft)}
+  .menu-item i{font-size:11px;color:#4b5262}
+  .menu-sep{border-top:1px solid var(--line);margin:6px 0}
+
+  .grid{background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  table{border-collapse:collapse;width:100%}
+  .jg th{background:var(--cyan);color:#fff;font-weight:600;font-size:12px;text-align:left;padding:11px 10px;white-space:nowrap}
+  .jg td{padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .jg tbody tr[data-line]:hover,.jg tbody tr[data-opt]:hover{background:#f6fbfd;cursor:pointer}
+  .num{text-align:right}
+  .jg th.num{text-align:right}
+  .jg tfoot td{font-weight:600;background:#fafbfc;border-bottom:0}
+  .act{color:#6b7280;display:flex;gap:8px;justify-content:flex-end}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:var(--soft);color:#4b5262;border-radius:10px;padding:2px 9px;font-size:11px;font-weight:500}
+  .chip.ok{background:#e7f6ec;color:#15803d}
+  .chip.off{background:#fdf0e6;color:var(--orange)}
+  .empty{padding:44px!important;text-align:center;color:var(--muted)}
+  .empty i{font-size:22px;display:block;margin-bottom:6px}
+
+  aside .card{background:#fff;border:1px solid var(--line);border-radius:6px;margin-bottom:14px;padding:0 14px 12px}
+  .tabs{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:0 -14px 10px;padding:0 14px}
+  .tabs span{padding:10px 0 8px;color:var(--muted);font-weight:500}
+  .tabs .on{color:var(--text);border-bottom:2px solid var(--magenta)}
+  .kv{display:flex;justify-content:space-between;align-items:center;padding:6px 0;color:#4b5262}
+  .kv b{color:var(--text);font-weight:600}
+  .kv i{color:#9aa1ad;margin-left:8px}
+  .kv.sep{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
+
+  /* options page */
+  .page2{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;padding:0 20px 20px}
+  .side{background:var(--navy);border-radius:6px;padding:10px;color:#cfd3df;min-height:520px}
+  .side-h{display:flex;justify-content:space-between;padding:8px 10px 14px;font-weight:500}
+  .side a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:4px;color:#cfd3df;text-decoration:none}
+  .side a.on{background:#2c3048;color:#fff}
+  .list-head{display:flex;justify-content:flex-end;gap:10px;margin-bottom:10px}
+  .list-note{margin-right:auto;color:var(--muted);display:flex;align-items:center;gap:6px}
+
+  /* modals */
+  .overlay{position:fixed;inset:0;background:rgba(18,20,32,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:44px 16px}
+  .overlay.open{display:flex}
+  #manage{z-index:60}
+  #gedit{z-index:65}
+  #confirm{z-index:80}
+  .modal{background:#fff;border-radius:6px;width:min(1240px,100%);box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:calc(100vh - 88px)}
+  .modal.md{width:min(1000px,100%)}
+  .modal.sm{width:min(880px,100%);margin-top:3vh}
+  .modal.xs{width:500px;margin-top:10vh}
+  .m-head{display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px;border-bottom:1px solid var(--line);gap:24px}
+  .m-tabs{display:flex;gap:28px}
+  .m-title{color:var(--magenta);font-weight:600;font-size:14px;padding:16px 2px 11px;border-bottom:2px solid var(--magenta);margin-bottom:-1px}
+  .m-tab{color:var(--muted);font-weight:500;padding:16px 2px 11px}
+  .x{background:none;border:0;font-size:16px;color:#4b5262;padding:14px 4px;margin-left:auto}
+  .m-meta{display:flex;gap:24px;padding:12px 18px 0;color:var(--muted);font-size:12px;flex-wrap:wrap}
+  .m-meta i{margin-right:4px}
+  .m-meta b{color:var(--text);font-weight:600}
+  .m-body{padding:12px 18px 16px;flex:1;min-height:0;display:flex}
+  .m-scroll{padding:4px 18px 18px;overflow:auto;flex:1;min-height:0}
+  .m-foot{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px;border-top:1px solid var(--line)}
+
+  /* job options popup table */
+  .twrap{border:1px solid var(--line);border-radius:4px;overflow:auto;flex:1;max-height:calc(100vh - 290px)}
+  .ot{table-layout:fixed}
+  .ot thead th{position:sticky;top:0;z-index:2;background:var(--cyan);color:#fff;font-weight:600;font-size:12.5px;text-align:left;padding:12px 14px;border-right:1px solid rgba(255,255,255,.35);white-space:nowrap}
+  .ot thead th:last-child{border-right:0}
+  .ot thead th.r{text-align:right}
+  .th-tax{display:flex;align-items:center;gap:8px}
+  .th-tax small{font-weight:500;opacity:.9;font-size:11px}
+  .ot tbody td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  .ot tbody tr.is-focus td{background:var(--focus)}
+  .ot tbody tr.is-focus td:first-child{box-shadow:inset 3px 0 0 var(--cyan)}
+  .ot tfoot td{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:12px 14px;z-index:2;vertical-align:bottom}
+  .tot-lbl{font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px}
+  .tot-box{background:#eeeff1;border-radius:3px;padding:9px 12px;color:#4b5262;min-height:36px}
+  .tot-box.r{text-align:right}
+  .tot-box.strong{color:var(--text);font-weight:600}
+
+  /* inputs */
+  .sel{height:34px;border:1px solid var(--input);border-radius:4px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;cursor:pointer;background:#fff;gap:8px;outline:0}
+  .sel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sel.ph span{color:#9aa1ad}
+  .sel i{color:#4b5262;font-size:11px}
+  .sel.open,.sel:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(27,168,216,.12)}
+  .inp,.ig{height:34px;border:1px solid var(--input);border-radius:4px;background:#fff;width:100%}
+  .inp{padding:0 10px;outline:0}
+  .ig{display:flex;align-items:stretch;overflow:hidden}
+  .ig input{border:0;outline:0;padding:0 10px;flex:1;min-width:0;background:transparent}
+  .ig .add{background:#f1f2f4;color:#6b7280;display:flex;align-items:center;padding:0 9px;font-size:12px;gap:4px;border-left:1px solid var(--input);white-space:nowrap}
+  .ig .add.pre{border-left:0;border-right:1px solid var(--input)}
+  .ig input.r,.inp.r{text-align:right}
+  .inp:focus,.ig:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(27,168,216,.12)}
+  .ig.dis,.inp:disabled,.inp[readonly]{background:#f7f8f9}
+  .ig.dis input::placeholder,.inp:disabled::placeholder{color:#b8bcc5}
+  .ig.lock{background:#f7f8f9}
+  .ig.lock input{color:#4b5262}
+  .inp.req{border-left:3px solid var(--red)}
+  .invalid{border-color:var(--red)!important;background:#fff5f5!important}
+  .invalid .add{background:#fde8e8}
+  .err{color:var(--red);font-size:11px;margin-top:4px;display:none;line-height:1.35}
+  .err.on{display:block}
+  .warn{font-size:11px;color:var(--orange);margin-top:5px;line-height:1.4}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}
+  .hint b{color:var(--text);font-weight:600}
+  .info{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .tag{font-size:10.5px;font-weight:600;border-radius:3px;padding:1px 6px;background:var(--soft);color:#4b5262;white-space:nowrap}
+  .tag.len{background:#e3f4fb;color:#0f7fa6}
+  .tag.bar{background:#efe9fb;color:#6a46c1}
+  .tag.off{background:#fdf0e6;color:var(--orange)}
+  .manual{color:var(--orange);display:block}
+  .manual a{color:var(--cyan);cursor:pointer;margin-left:6px;text-decoration:underline}
+  .vsel{height:34px;border:1px solid var(--input);border-radius:4px;padding:0 8px;width:100%;background:#fff;outline:0}
+  .vsel:focus{border-color:var(--cyan)}
+  .vsel:disabled{background:#f7f8f9;color:#b8bcc5}
+  td.gross{text-align:right;font-weight:600;padding-top:21px!important}
+  .del{background:none;border:0;color:#9aa1ad;font-size:15px;padding:8px 4px}
+  .del:hover{color:var(--red)}
+  .cb{width:16px;height:16px;accent-color:var(--magenta);margin:0;cursor:pointer}
+  .cb:disabled{cursor:not-allowed}
+
+  /* toggle switch (same as live Tax toggle) */
+  .sw{position:relative;width:48px;height:22px;display:inline-block;flex:none}
+  .sw input{opacity:0;width:0;height:0;position:absolute}
+  .sw span{position:absolute;inset:0;background:#c3c8d1;border-radius:11px;transition:.15s;cursor:pointer}
+  .sw span::before{content:'Off';position:absolute;right:7px;top:4px;font-size:10px;color:#fff;font-weight:600}
+  .sw span::after{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+  .sw input:checked+span{background:var(--cyan)}
+  .sw input:checked+span::before{content:'On';left:8px;right:auto}
+  .sw input:checked+span::after{left:29px}
+  .sw input:focus-visible+span{box-shadow:0 0 0 3px rgba(27,168,216,.3)}
+  .sw input:disabled+span{opacity:.5;cursor:not-allowed}
+  .sw.inv span{background:rgba(255,255,255,.35)}
+  .sw.inv input:checked+span{background:#fff}
+  .sw.inv input:checked+span::before{color:var(--cyan)}
+  .sw.inv input:checked+span::after{background:var(--cyan)}
+  .tax{display:flex;align-items:center;gap:8px}
+  .tax .vsel{flex:1;min-width:0}
+
+  /* floating dropdowns */
+  .dd{position:fixed;z-index:75;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px rgba(20,24,40,.16);display:none;flex-direction:column;max-height:360px}
+  .dd.open{display:flex}
+  .dd-s{padding:8px;border-bottom:1px solid var(--line)}
+  .dd-s .ig{height:32px}
+  .dd-s .ig .add{background:#fff;border-left:0}
+  .dd-list{overflow:auto;padding:4px 0;flex:1}
+  .dd-group,.dd-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer}
+  .dd-group{font-weight:500}
+  .dd-group i{font-size:11px;color:#6b7280;width:12px}
+  .dd-item:hover,.dd-group:hover{background:var(--soft)}
+  .dd-item .nm{flex:1;min-width:0}
+  .dd-item .pth{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+  .dd-item.dis{opacity:.45;cursor:not-allowed}
+  .dd-item.dis:hover{background:none}
+  .dd-item.on{color:var(--magenta);font-weight:500}
+  .dd-none{padding:16px;color:var(--muted);text-align:center}
+  .dd-foot{padding:8px;border-top:1px solid var(--line)}
+  .dd-foot .btn{width:100%;justify-content:center}
+  .kmenu{position:fixed;z-index:90;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 10px 26px rgba(20,24,40,.16);padding:4px 0;min-width:160px;display:none}
+  .kmenu.open{display:block}
+  .kmenu div{padding:8px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+  .kmenu div:hover{background:var(--soft)}
+  .kmenu .danger{color:var(--red)}
+
+  /* option setup form */
+  .sec-bar{background:var(--cyan);color:#fff;font-weight:600;padding:9px 14px;border-radius:4px;display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+  .sec-bar .bar-r{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px}
+  .fgrid{display:grid;grid-template-columns:190px minmax(0,1fr) 170px minmax(0,1fr);gap:12px 20px;align-items:start;padding:0 14px}
+  .fgrid>label{padding-top:9px;color:#4b5262;line-height:1.3}
+  .fgrid .cbrow{display:flex;align-items:center;gap:8px;min-height:34px}
+  .fnote{grid-column:1/-1;color:var(--muted);background:#f7f8f9;border:1px dashed var(--input);border-radius:4px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start}
+  .tip{position:relative;color:#6b7280;cursor:help;font-style:normal}
+  .tip:hover::after{content:attr(data-tip);position:absolute;left:-10px;top:calc(100% + 8px);width:300px;background:#1f2430;color:#fff;font-size:11.5px;line-height:1.45;padding:8px 10px;border-radius:4px;z-index:5;font-family:Inter,sans-serif;font-weight:400;white-space:normal}
+  .sold-box{margin:16px 14px 4px;border:1px solid #bfe6f5;background:#f2fafd;border-radius:6px;padding:12px 14px;display:flex;gap:12px;line-height:1.55}
+  .sold-box>i{color:var(--cyan);font-size:18px}
+  .sold-box.bad{border-color:#f6d3b3;background:#fff8f1}
+  .sold-box.bad>i{color:var(--orange)}
+  .bands{grid-column:2/-1;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .bands th{background:#f4f6f8;text-align:left;padding:8px 10px;font-weight:600;font-size:12px;color:#4b5262}
+  .bands td{padding:6px 10px;border-top:1px solid var(--line)}
+  .bands .lnk{color:var(--cyan);background:none;border:0;padding:8px 10px;font-weight:500}
+
+  /* manage groups */
+  .mg{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;height:440px;width:100%}
+  .mg-left,.mg-right{border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;min-width:0}
+  .mg-tree{flex:1;overflow:auto;padding:6px}
+  .mg-node{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:4px;cursor:pointer}
+  .mg-node:hover{background:#f7f8f9}
+  .mg-node.sel{background:var(--focus);box-shadow:inset 0 0 0 1px #bfe6f5}
+  .mg-node.root .nm{font-weight:600}
+  .mg-node .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mg-node .tg{font-size:11px;color:#6b7280;width:14px}
+  .mg-node .sp{width:14px}
+  .mg-node .lv{font-size:10px;color:var(--muted)}
+  .kb{background:none;border:0;color:#4b5262;padding:2px 4px;border-radius:3px}
+  .kb:hover{background:var(--soft)}
+  .grip{color:#b8bcc5}
+  .mg-add{margin:8px;justify-content:center}
+  .mg-rh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .mg-rh h4{margin:0;font-size:14px}
+  .mg-rh .ig{width:220px;margin-left:auto;height:32px}
+  .mg-tw{overflow:auto;flex:1}
+  .mg-tw th{position:sticky;top:0}
+  .geform{display:grid;grid-template-columns:150px 1fr;gap:12px 16px;align-items:start;padding:16px 18px}
+  .geform label{padding-top:9px;color:#4b5262}
+  .msel{position:relative}
+  .msel-panel{position:absolute;left:0;right:0;top:38px;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px rgba(20,24,40,.16);z-index:5;display:none}
+  .msel-panel.open{display:block}
+  .msel-list{max-height:230px;overflow:auto;padding:4px 0}
+  .msel-list label{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer}
+  .msel-list label:hover{background:var(--soft)}
+  .msel-list small{margin-left:auto;color:var(--muted);font-size:10.5px}
+  .cfield{margin-top:12px}
+  .cfield label{display:block;margin-bottom:6px;color:#4b5262}
+  .cbody{padding:18px 16px;color:#33394a}
+  .cbody p{margin:0}
+
+  /* mixed job grid */
+  .jg tr.opt-row td:first-child{box-shadow:inset 3px 0 0 #8fd3ee}
+  .ptag{font-size:10px;font-weight:600;border-radius:3px;padding:1px 6px;background:#e3f4fb;color:#0f7fa6;margin-left:6px;vertical-align:1px}
+  .pname{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+  .pname i{color:#0f7fa6}
+  .na{color:#b0b5bf}
+  .gsel{height:28px;border:1px solid var(--input);border-radius:4px;padding:0 6px;background:#fff;min-width:120px}
+  .desc{max-width:280px;overflow:hidden;text-overflow:ellipsis}
+  .grid-legend{display:flex;gap:18px;color:var(--muted);font-size:12px;padding:8px 2px 0}
+  .grid-legend span{display:flex;align-items:center;gap:6px}
+  .grid-legend .sw-b{width:3px;height:14px;background:#8fd3ee;border-radius:2px}
+
+  .exp{background:none;border:0;color:#4b5262;padding:3px 6px;border-radius:4px;font-size:12px}
+  .exp:hover{background:var(--soft)}
+  .jg tr.detail td{background:#f4f6f8;padding:12px 16px;white-space:normal}
+  .det{display:flex;align-items:center;gap:34px;color:#4b5262;flex-wrap:wrap}
+  .det b{color:var(--text);font-weight:600}
+  .det .r{margin-left:auto;display:flex;gap:14px;align-items:center}
+  .det .qr{font-size:30px;color:var(--text)}
+  .grip{cursor:grab}
+  .jg tr.dragging{opacity:.4}
+  .jg tr.drop-before td{box-shadow:inset 0 2px 0 var(--magenta)!important}
+  .jg tr.drop-after td{box-shadow:inset 0 -2px 0 var(--magenta)!important}
+  .seqc{padding-top:21px!important;color:#4b5262}
+
+  /* product popup (replica of live) */
+  .pp{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;padding:14px 18px;overflow:auto;flex:1;min-height:0}
+  .pp-left,.pp-right{border:1px solid var(--line);border-radius:4px}
+  .pp-top{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);color:#4b5262}
+  .pp-top .sp-r{margin-left:auto}
+  .pp-fields{display:grid;grid-template-columns:150px minmax(0,1fr) 150px minmax(0,1fr);gap:12px 18px;padding:16px;align-items:center}
+  .pp-fields label{color:#4b5262}
+  .pp-right .ttl{display:flex;align-items:center;gap:6px;font-weight:600;padding:12px 14px 6px}
+  .pp-kv{display:grid;grid-template-columns:110px 1fr 130px;gap:8px;align-items:center;padding:7px 14px}
+  .pp-kv .box{background:#eeeff1;border-radius:3px;padding:8px 10px;text-align:right}
+  .lnk2{color:var(--cyan);text-decoration:underline}
+  .ptitle{color:var(--cyan)!important}
+
+  .toast{position:fixed;right:20px;bottom:20px;z-index:99;background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:6px;box-shadow:0 10px 30px rgba(20,24,40,.16);padding:12px 16px;display:flex;align-items:center;gap:10px;transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s;max-width:460px}
+  .toast.on{transform:none;opacity:1}
+  .toast i{font-size:17px;color:var(--green)}
+  .toast.err{border-left-color:var(--red)}
+  .toast.err i{color:var(--red)}
+</style>
+</head>
+<body>
+
+<header class="topnav">
+  <div class="brand"><i class="bi bi-layout-three-columns"></i>Lovely Blinds</div>
+  <nav class="nav">
+    <a>Dashboard</a><a data-page="job" class="on">All Jobs</a><a>Tasks</a><a>Calendar</a>
+    <a>Production management</a><a>Purchase Orders</a><a data-page="options">Stock level</a>
+    <a>More <i class="bi bi-caret-down-fill" style="font-size:10px;margin-left:4px"></i></a>
+  </nav>
+  <div class="nav-r">
+    <i class="bi bi-plus-lg"></i><i class="bi bi-search"></i>
+    <span class="bell"><i class="bi bi-bell"></i><b>3</b></span>
+    <i class="bi bi-question-circle"></i><i class="bi bi-gear"></i>
+    <span class="user"><span class="avatar">VR</span>Vivek Rao <i class="bi bi-caret-down-fill" style="font-size:10px"></i></span>
+  </div>
+</header>
+
+<div class="crumb" id="crumb">All jobs &nbsp;›&nbsp; <b>Edit job</b></div>
+
+<!-- ================= JOB PAGE ================= -->
+<div class="page" id="pageJob">
+  <section>
+    <div class="jobhead">
+      <h2>Joe smith - Joe's company</h2>
+      <div class="jh-field"><label>Job status:</label><input class="jh-input" value="Invoiced" readonly></div>
+      <div class="jh-field"><label>Job Ref No:</label><input class="jh-input" value="ON2314" readonly></div>
+      <div class="jh-field"><label>Account ref</label><input class="jh-input" value="JOES015" readonly></div>
+      <div class="jh-field"><label>Order status:</label><input class="jh-input" value="Office" readonly></div>
+      <div class="jh-field"><label>Unit:</label>
+        <select class="jh-input" id="jobUnit">
+          <option value="mm">Millimetre (mm)</option>
+          <option value="cm">Centimetre (cm)</option>
+          <option value="inch">Inch (in)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn btn-mag" id="addBtn">Add product <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
+      <button class="btn btn-out">Select report <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
+      <div class="tb-r">
+        <button class="btn btn-out">Production <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
+        <button class="btn btn-out">Send PO <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
+        <button class="btn icon-sq"><i class="bi bi-globe"></i></button>
+        <button class="btn icon-sq"><i class="bi bi-three-dots"></i></button>
+      </div>
+      <div class="menu" id="addMenu">
+        <div class="menu-search"><div class="s"><input placeholder="Search"><i class="bi bi-search"></i></div><span>BM sheet view</span></div>
+        <div class="menu-item" data-prod>Ungrouped products <i class="bi bi-caret-right-fill"></i></div>
+        <div class="menu-item" data-prod>Roller <i class="bi bi-caret-right-fill"></i></div>
+        <div class="menu-item" data-prod>Verticals <i class="bi bi-caret-right-fill"></i></div>
+        <div class="menu-item" data-prod>Tubes <i class="bi bi-caret-right-fill"></i></div>
+        <div class="menu-sep"></div>
+        <div id="menuOpts"></div>
+      </div>
+    </div>
+
+    <div class="grid" style="overflow-x:auto">
+      <table class="jg" style="min-width:1320px">
+        <thead><tr>
+          <th style="width:34px"><input type="checkbox"></th><th style="width:26px"></th><th>Seq.</th><th>Product</th><th>Description</th>
+          <th class="num">Cost</th><th class="num">Qty</th><th>Product status</th><th>Override</th><th class="num">Per unit cost price</th>
+          <th class="num">Net price</th><th class="num">VAT</th><th class="num">Gross price</th><th style="width:56px"></th>
+        </tr></thead>
+        <tbody id="gridBody"></tbody>
+        <tfoot id="gridFoot"></tfoot>
+      </table>
+    </div>
+    <div class="grid-legend">
+      <span><i class="bi bi-chevron-down"></i>Expand a line for details + Edit</span>
+      <span><i class="sw-b"></i><i class="bi bi-box-seam" style="color:#0f7fa6"></i>Option line · click opens all job options, this line highlighted</span>
+      <span><i class="bi bi-grip-vertical"></i>Drag a line to change Seq (popup Seq follows)</span>
+    </div>
+  </section>
+
+  <aside>
+    <div class="card">
+      <div class="tabs"><span>Dates</span><span class="on">Appointments</span><span>Task</span></div>
+      <div class="kv"><span>Fitter</span><span>David</span><span>22 / 03 /2021 <i class="bi bi-calendar3"></i></span></div>
+      <div class="kv"><span>Measurer</span><span>Mike</span><span>22 / 03 /2021 <i class="bi bi-calendar3"></i></span></div>
+      <div class="kv"><span>Surveyor</span><span>Paul</span><span>22 / 03 /2021 <i class="bi bi-calendar3"></i></span></div>
+    </div>
+    <div class="card">
+      <div class="tabs"><span class="on">Price Details</span><span>Invoice &amp; Payments</span><span>Checklist</span></div>
+      <div class="kv"><span>Net total</span><b id="pdNet">£0.00</b></div>
+      <div class="kv"><span>VAT</span><b id="pdVat">£0.00</b></div>
+      <div class="kv"><span>Gross total</span><b id="pdGross">£0.00</b></div>
+      <div class="kv"><span>Delivery cost</span><span>Standard &nbsp; £0.00</span></div>
+      <div class="kv sep"><span>Total Paid</span><b>£0.00</b></div>
+      <div class="kv"><span>Outstanding Amount</span><b id="pdOut">£0.00</b></div>
+    </div>
+  </aside>
+</div>
+
+<!-- ================= OPTIONS (STOCK LEVEL) PAGE ================= -->
+<div class="page2" id="pageOptions" hidden>
+  <div class="side">
+    <div class="side-h">Menu <i class="bi bi-chevron-double-left"></i></div>
+    <a class="on"><i class="bi bi-sliders"></i>All options</a>
+    <a><i class="bi bi-database"></i>All materials</a>
+    <a><i class="bi bi-arrow-left-right"></i>Transaction history</a>
+  </div>
+  <div>
+    <div class="list-head">
+      <span class="list-note"><i class="bi bi-info-circle"></i>Click an option to edit. "Can be sold separately" follows the pricing type and stock rules.</span>
+      <button class="btn btn-out">Default view <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
+      <button class="btn btn-mag" id="addOptBtn"><i class="bi bi-plus-lg"></i>Add option</button>
+    </div>
+    <div class="grid">
+      <table class="jg">
+        <thead><tr>
+          <th style="width:34px"><input type="checkbox"></th><th>Option name</th><th>Option code</th><th>Supplier</th>
+          <th>Pricing type</th><th>Stock</th><th>Unit type</th><th class="num">Available</th>
+          <th>Sold separately</th><th>Option group</th><th style="width:40px"></th>
+        </tr></thead>
+        <tbody id="optBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ================= JOB: OPTIONS POPUP ================= -->
+<div class="overlay" id="popup">
+  <div class="modal" role="dialog" aria-labelledby="popTitle">
+    <div class="m-head">
+      <div class="m-title" id="popTitle">Options</div>
+      <button class="x" data-close="popup" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="m-meta">
+      <span><i class="bi bi-person"></i>Account: <b>Joe's company</b> (Trade)</span>
+      <span><i class="bi bi-rulers"></i>Length unit: <b id="metaUnit">mm</b> (from job)</span>
+      <span><i class="bi bi-receipt"></i>Default tax: <b>On · 20.000%</b> (switch off per line)</span>
+      <span id="metaMode"></span>
+    </div>
+    <div class="m-body">
+      <div class="twrap" id="twrap">
+        <table class="ot">
+          <colgroup>
+            <col style="width:58px"><col style="width:24%"><col style="width:13%"><col style="width:8%"><col style="width:11%">
+            <col style="width:13%"><col style="width:16%"><col style="width:9%"><col style="width:42px">
+          </colgroup>
+          <thead><tr>
+            <th>Seq</th><th>Option</th><th>Length</th><th>Qty</th><th>Discount</th><th>Price</th>
+            <th>Tax</th>
+            <th class="r">Gross</th><th></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+          <tfoot><tr>
+            <td></td>
+            <td style="font-weight:600;padding-bottom:20px">Total</td>
+            <td></td>
+            <td><span class="tot-lbl">Qty</span><div class="tot-box" id="tQty">0</div></td>
+            <td></td>
+            <td><span class="tot-lbl">Net</span><div class="tot-box r" id="tNet">£0.00</div></td>
+            <td><span class="tot-lbl">Tax</span><div class="tot-box r" id="tVat">£0.00</div></td>
+            <td><span class="tot-lbl">Gross</span><div class="tot-box r strong" id="tGross">£0.00</div></td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-green" id="saveBtn">Save</button>
+      <button class="btn btn-ghost" data-close="popup">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= JOB: PRODUCT POPUP (replica of live, for comparison) ================= -->
+<div class="overlay" id="ppop">
+  <div class="modal" role="dialog">
+    <div class="m-head">
+      <div class="m-tabs"><div class="m-title ptitle" id="ppTitle">Seq 1 - NS_BWF Info</div><div class="m-tab">Production</div></div>
+      <button class="x" data-close="ppop" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="pp">
+      <div class="pp-left">
+        <div class="pp-top">Product status: <select class="gsel"><option>Select Status</option><option>Ready</option></select>
+          <span class="sp-r">Recipe name: <b id="ppRecipe">Standard</b></span></div>
+        <div class="pp-fields" id="ppFields"></div>
+      </div>
+      <div class="pp-right">
+        <div class="ttl"><i class="bi bi-caret-down-fill" style="font-size:10px"></i>Price details</div>
+        <div class="pp-kv"><span>Cost price</span><span></span><div class="box" id="ppCost"></div></div>
+        <div class="pp-kv"><span>Override</span><select class="gsel"><option>Select</option><option>Net</option><option>Gross</option><option>Discount %</option></select><div class="box" style="background:#fff;border:1px solid var(--input)">&nbsp;</div></div>
+        <div class="pp-kv"><span class="lnk2">Net price</span><span></span><div class="box" id="ppNet"></div></div>
+        <div class="pp-kv"><span>Tax</span>
+          <div class="tax"><label class="sw"><input type="checkbox" id="ppTaxOn"><span></span></label>
+            <select class="vsel" id="ppRate"></select></div>
+          <div class="box" id="ppVat"></div></div>
+        <div class="pp-kv"><span>Total gross price</span><span></span><div class="box" id="ppGross"></div></div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-green" id="ppSave">Save</button>
+      <button class="btn btn-ghost">Copy</button>
+      <button class="btn btn-ghost" data-close="ppop">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OPTION SETUP: ADD / EDIT OPTION ================= -->
+<div class="overlay" id="oform">
+  <div class="modal md" role="dialog">
+    <div class="m-head">
+      <div class="m-tabs"><div class="m-title" id="oformTitle">Add option</div></div>
+      <button class="x" data-close="oform" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="m-head" style="border-bottom:1px solid var(--line)">
+      <div class="m-tabs"><div class="m-title" style="font-size:13px">Details</div><div class="m-tab">Transaction</div></div>
+    </div>
+    <div class="m-scroll" id="oformBody"></div>
+    <div class="m-foot">
+      <button class="btn btn-green" id="oformSave">Save</button>
+      <button class="btn btn-ghost" data-close="oform">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MANAGE OPTION GROUPS ================= -->
+<div class="overlay" id="manage">
+  <div class="modal sm" role="dialog">
+    <div class="m-head">
+      <div class="m-title">Manage option groups</div>
+      <button class="x" data-close="manage" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="m-body">
+      <div class="mg">
+        <div class="mg-left">
+          <div class="mg-tree" id="mgTree"></div>
+          <button class="btn btn-mag mg-add" id="mgAdd"><i class="bi bi-plus-lg"></i>Add new group</button>
+        </div>
+        <div class="mg-right">
+          <div class="mg-rh">
+            <div><h4 id="mgTitle">Options</h4><div class="hint" id="mgSub" style="margin:2px 0 0"></div></div>
+            <div class="ig"><input id="mgSearch" placeholder="Search option"><span class="add" style="background:#fff;border-left:0"><i class="bi bi-search"></i></span></div>
+            <button class="btn btn-out" id="mgLink"><i class="bi bi-link-45deg"></i>Link options</button>
+          </div>
+          <div class="mg-tw">
+            <table class="jg">
+              <thead><tr><th>Option name</th><th>Option code</th><th class="num">Available qty</th><th style="width:60px"></th></tr></thead>
+              <tbody id="mgRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <span class="hint" style="margin:0 auto 0 0;align-self:center"><i class="bi bi-info-circle"></i> Max 3 levels. Only options with "Can be sold separately" can be linked.</span>
+      <button class="btn btn-green" id="mgSave">Save</button>
+      <button class="btn btn-ghost" data-close="manage">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ADD / EDIT OPTION GROUP ================= -->
+<div class="overlay" id="gedit">
+  <div class="modal xs" role="dialog">
+    <div class="m-head">
+      <div class="m-title" id="geTitle">Add option group</div>
+      <button class="x" data-close="gedit" title="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="geform">
+      <label>Option group name</label>
+      <div><input class="inp req" id="geName" placeholder="Enter group name"><div class="err" id="geErr"></div></div>
+      <label>Parent group</label>
+      <div><input class="inp" id="geParent" readonly></div>
+      <label>Linked option</label>
+      <div class="msel">
+        <div class="sel" id="geSel" tabindex="0"><span>Select options</span><i class="bi bi-caret-down-fill"></i></div>
+        <div class="msel-panel" id="gePanel">
+          <div class="dd-s"><div class="ig"><input id="geSearch" placeholder="Search"><span class="add"><i class="bi bi-search"></i></span></div></div>
+          <div class="msel-list" id="geList"></div>
+        </div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-green" id="geSave">Save</button>
+      <button class="btn btn-ghost" data-close="gedit">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CONFIRM ================= -->
+<div class="overlay" id="confirm">
+  <div class="modal xs" role="alertdialog" style="width:460px;margin-top:18vh">
+    <div class="m-head"><div class="m-title" id="cTitle">Delete</div><button class="x" data-cclose><i class="bi bi-x-lg"></i></button></div>
+    <div class="cbody" id="cBody"></div>
+    <div class="m-foot"><button class="btn btn-red" id="confirmOk">Delete</button><button class="btn btn-ghost" data-cclose>Cancel</button></div>
+  </div>
+</div>
+
+<!-- floating panels -->
+<div class="dd" id="dd">
+  <div class="dd-s"><div class="ig"><input id="ddSearch" placeholder="Search"><span class="add"><i class="bi bi-search"></i></span></div></div>
+  <div class="dd-list" id="ddList"></div>
+</div>
+<div class="dd" id="gdd">
+  <div class="dd-s"><div class="ig"><input id="gddSearch" placeholder="Search"><span class="add"><i class="bi bi-search"></i></span></div></div>
+  <div class="dd-list" id="gddList"></div>
+  <div class="dd-foot"><button class="btn btn-mag" id="gddManage">Manage group</button></div>
+</div>
+<div class="kmenu" id="kmenu"></div>
+<div class="toast" id="toast"><i class="bi bi-check-circle-fill"></i><span></span></div>
+
+<script>
+/* =========================================================
+   MASTER DATA
+   ========================================================= */
+const PRICING = [
+  {id:1, name:'Fixed'},
+  {id:2, name:'Percentage of price table cost price'},
+  {id:3, name:'Width prices'},
+  {id:4, name:'Drop prices'},
+  {id:5, name:'Price table'},
+  {id:6, name:'Price per meter (Width)'},
+  {id:7, name:'Price per meter (Drop)'},
+  {id:8, name:'Price per inch (Width)'},
+  {id:9, name:'Price per inch (Drop)'},
+  {id:10, name:'Price per curtain drop'},
+  {id:11, name:'Meter square'},
+  {id:12, name:'Perimeter'},
+  {id:14, name:'Square foot'},
+  {id:15, name:'Square yard'},
+  {id:17, name:'Multiply by price table cost price'},
+  {id:18, name:'Price based on quantity'},
+  {id:19, name:'Price per foot (Width)'},
+  {id:20, name:'Price per foot (Drop)'}
+];
+// Pricing types that work without a product (no width/drop/price table needed)
+const SALE = {1:'fixed', 3:'band', 4:'band', 6:'per_m', 7:'per_m', 8:'per_in', 9:'per_in', 19:'per_ft', 20:'per_ft'};
+const pricingName = id => (PRICING.find(p => p.id === id) || {}).name || '-';
+
+// Unit type ids as stored in bm_common_dropdown_list (unit_type)
+const UNIT_TYPES = [
+  {id:5, name:'Each', kind:'qty'},
+  {id:6, name:'Set',  kind:'qty'},
+  {id:2, name:'Length (mm)',   kind:'len', f:1,     ab:'mm'},
+  {id:1, name:'Length (cm)',   kind:'len', f:10,    ab:'cm'},
+  {id:3, name:'Length (m)',    kind:'len', f:1000,  ab:'m'},
+  {id:4, name:'Length (inch)', kind:'len', f:25.4,  ab:'in'},
+  {id:9, name:'Length (feet)', kind:'len', f:304.8, ab:'ft'},
+  {id:8, name:'Length (yard)', kind:'len', f:914.4, ab:'yd'}
+];
+const unitOf = o => UNIT_TYPES.find(u => u.id === o.unitId);
+const SUPPLIERS = ['Decora', 'Markilux', 'Abba blinds', 'Arena'];
+const RATES = [20, 5, 0];
+
+let GROUPS = [
+  {id:0, name:'Options',     parent:null, order:0},
+  {id:1, name:'Screws',      parent:0, order:1},
+  {id:2, name:'Left screw',  parent:1, order:1},
+  {id:7, name:'Stainless',   parent:2, order:1},
+  {id:3, name:'Right screw', parent:1, order:2},
+  {id:4, name:'Motors',      parent:0, order:2},
+  {id:5, name:'Chain',       parent:0, order:3},
+  {id:6, name:'Tubes',       parent:0, order:4}
+];
+
+const mk = o => ({supplier:'Decora', hasPrice:true, pricingId:1, cost:0, price:null, rate:null, bands:null,
+  hasStock:false, unitId:null, lpuMM:null, stockQty:null, sold:false, groupId:0, backorder:false, noMultiply:false, ...o});
+let OPTIONS = [
+  mk({id:1,  name:'Wood glue (500ml)',      code:'WG-500', cost:4,   price:7.50, sold:true}),
+  mk({id:2,  name:'Bracket set (L-shaped)', code:'BR-L2',  cost:9,   price:15,   hasStock:true, unitId:6, stockQty:6,   sold:true}),
+  mk({id:3,  name:'Duct tape (50mm x 20m)', code:'DT-50',  supplier:'Arena', cost:2.1, price:4.20, hasStock:true, unitId:5, stockQty:40, sold:true}),
+  mk({id:10, name:'Wood screw',             code:'WS-01',  cost:0.1, price:0.35, hasStock:true, unitId:5, stockQty:500, sold:true, groupId:1}),
+  mk({id:11, name:'1 inch screw',           code:'T35-06', cost:0.9, price:2.00, hasStock:true, unitId:5, stockQty:100, sold:true, groupId:2}),
+  mk({id:12, name:'2 inch screw',           code:'T35-07', cost:1.1, price:2.40, hasStock:true, unitId:5, stockQty:60,  sold:true, groupId:2}),
+  mk({id:13, name:'Stainless 1 inch screw', code:'SS-1',   cost:1.4, price:3.10, sold:true, groupId:7}),
+  mk({id:14, name:'Metal 50 mm screw',      code:'MS-50',  cost:0.8, price:1.80, sold:true, groupId:3}),
+  mk({id:20, name:'250 V motor',            code:'2123',   supplier:'Markilux', cost:70, price:120, hasStock:true, unitId:5, stockQty:3, sold:true, groupId:4}),
+  mk({id:21, name:'Kemo motor',             code:'6432',   supplier:'Markilux', cost:55, price:95,  hasStock:true, unitId:5, stockQty:8, sold:true, groupId:4}),
+  mk({id:30, name:'Metal ball chain',       code:'CH-MB',  pricingId:19, cost:0.6, rate:1.50, sold:true, groupId:5}),
+  mk({id:31, name:'Blind cord (3mm)',       code:'CD-3',   pricingId:3, cost:3, bands:[{upto:1000,price:8},{upto:2000,price:14},{upto:3000,price:20}], sold:true, groupId:5}),
+  mk({id:40, name:'PVC tube (35mm)',        code:'2354',   pricingId:6, cost:4, rate:10, hasStock:true, unitId:2, lpuMM:6000, stockQty:5, sold:true, groupId:6}),
+  mk({id:41, name:'Aluminium bar (6 m)',    code:'AB-6',   cost:12, price:24, hasStock:true, unitId:3, lpuMM:6000, stockQty:4, sold:true, groupId:6}),
+  mk({id:42, name:'Copper tube (15mm)',     code:'CT-15',  pricingId:8, cost:0.05, rate:0.12, sold:true, groupId:6}),
+  // Not sold separately (examples for the rules)
+  mk({id:50, name:'Bottom bar (white)',     code:'BB-W',   pricingId:3, cost:5, bands:[{upto:1500,price:12},{upto:3000,price:18}]}),
+  mk({id:51, name:'Blackout lining',        code:'BL-01',  pricingId:11, cost:6}),
+  mk({id:52, name:'Endcap set',             code:'EC-2',   cost:1, price:2.5, hasStock:true, unitId:6, stockQty:30}),
+  mk({id:53, name:'Valance fixing',         code:'VF-50',  pricingId:2, cost:0}),
+  mk({id:54, name:'Chain connector',        code:'CC-1',   pricingId:6, cost:0.4, rate:1.2, hasStock:true, unitId:5, stockQty:200})
+];
+const opt = id => OPTIONS.find(o => o.id === id);
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const UL = {mm:'mm', cm:'cm', inch:'in'};
+const toMM = (v,u) => u==='mm' ? v : u==='cm' ? v*10 : v*25.4;
+const fromMM = (v,u) => u==='mm' ? v : u==='cm' ? v/10 : v/25.4;
+const trim = n => String(Math.round(n*100)/100);
+const r2 = n => Math.round(n*100)/100;
+const money = v => '£' + (v||0).toLocaleString('en-GB',{minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let jobUnit = 'mm';
+const fmtLen = mm => `${trim(fromMM(mm, jobUnit))} ${UL[jobUnit]}`;
+const lenInUnit = (mm, u) => `${trim(mm / u.f)} ${u.ab}`;
+
+// group helpers (list param lets the Manage dialog work on a draft copy)
+const G = (id, list = GROUPS) => list.find(g => g.id === id);
+const kids = (pid, list = GROUPS) => list.filter(g => g.parent === pid).sort((a,b) => a.order - b.order);
+function level(id, list = GROUPS){ let l = 0, g = G(id, list); while (g && g.parent !== null){ l++; g = G(g.parent, list); } return l; }
+function gpath(id, list = GROUPS){ const out = []; let g = G(id, list); while (g && g.parent !== null){ out.unshift(g.name); g = G(g.parent, list); } return out; }
+function isUnder(gid, anc, list = GROUPS){ let g = G(gid, list); while (g){ if (g.id === anc) return true; g = g.parent === null ? null : G(g.parent, list); } return false; }
+const groupLabel = (id, list = GROUPS) => id === 0 ? 'Options' : gpath(id, list).join(' › ');
+function topGroup(id){ let g = G(id); if (!g || g.id === 0) return 'Options'; while (g.parent !== 0) g = G(g.parent); return g.name; }
+
+/* =========================================================
+   SELL-SEPARATELY RULES  (pricing type decides; unit type only checked when stock is On)
+   ========================================================= */
+function elig(o){
+  if (!o.hasPrice) return {ok:false, reason:'Turn on "Option has price" first.'};
+  const s = SALE[o.pricingId];
+  if (!s) return {ok:false, reason:`"${pricingName(o.pricingId)}" needs a product's width/drop or price table. Use Fixed, Price per meter/inch/foot or Width/Drop prices.`};
+  if (s === 'band' && !(o.bands && o.bands.length)) return {ok:false, reason:'Add at least one width/drop price band.'};
+  if (!o.hasStock) return {ok:true, mode: s === 'fixed' ? 'qty' : 'length'};
+  const u = unitOf(o);
+  if (!u) return {ok:false, reason:'Select a unit type in the stock section.'};
+  if (u.kind === 'qty'){
+    if (s !== 'fixed') return {ok:false, reason:`Unit type "${u.name}" works only with Fixed pricing. Change pricing to Fixed or unit type to Length.`};
+    return {ok:true, mode:'qty'};
+  }
+  if (!(o.lpuMM > 0)) return {ok:false, reason:'Enter "Length per unit" for Length stock.'};
+  return {ok:true, mode: s === 'fixed' ? 'fullpiece' : 'length'};
+}
+const mode = o => elig(o).mode || 'qty';
+const sellable = () => OPTIONS.filter(o => o.sold && elig(o).ok);
+const availOf = o => mode(o) === 'qty' ? o.stockQty : o.stockQty * o.lpuMM;
+
+function modeTag(o){
+  const m = mode(o), s = SALE[o.pricingId];
+  if (m === 'fullpiece') return '<span class="tag bar">Full bar</span>';
+  if (m === 'length') return `<span class="tag len">${{per_m:'Per metre', per_ft:'Per foot', per_in:'Per inch', band:o.pricingId === 4 ? 'Drop price' : 'Width price'}[s]}</span>`;
+  return `<span class="tag">${o.hasStock ? unitOf(o).name : 'Each'}</span>`;
+}
+function rateText(o){
+  switch (SALE[o.pricingId]){
+    case 'per_m':  return `${money(o.rate)} / m`;
+    case 'per_ft': return `${money(o.rate)} / ft`;
+    case 'per_in': return `${money(o.rate)} / in`;
+    case 'band':   return `Band price up to ${fmtLen(o.bands[o.bands.length-1].upto)}`;
+  }
+  if (mode(o) === 'fullpiece') return `${money(o.price)} / bar (${fmtLen(o.lpuMM)})`;
+  return `${money(o.price)} / ${o.hasStock ? unitOf(o).name.toLowerCase() : 'each'}`;
+}
+function stockText(o){
+  if (!o.hasStock) return '<span class="tag off">Stock off</span>';
+  const m = mode(o);
+  const v = m === 'qty' ? o.stockQty : m === 'fullpiece' ? `${o.stockQty} bars` : fmtLen(availOf(o));
+  return `<span><i class="bi bi-box-seam"></i> In stock: ${v}</span>`;
+}
+
+/* =========================================================
+   PAGE SWITCH
+   ========================================================= */
+document.querySelectorAll('.nav a[data-page]').forEach(a => a.addEventListener('click', () => showPage(a.dataset.page)));
+function showPage(p){
+  document.querySelectorAll('.nav a[data-page]').forEach(a => a.classList.toggle('on', a.dataset.page === p));
+  $('pageJob').hidden = p !== 'job';
+  $('pageOptions').hidden = p !== 'options';
+  $('crumb').innerHTML = p === 'job' ? 'All jobs &nbsp;›&nbsp; <b>Edit job</b>' : 'Stock level &nbsp;›&nbsp; <b>All options</b>';
+  if (p === 'job') renderGrid(); else renderOptionList();
+}
+
+/* =========================================================
+   JOB: OPTIONS POPUP
+   ========================================================= */
+// jobLines order = job Seq (Seq = position + 1). Products and options share it.
+let jobLines = [], lineSeq = 0;
+// edit:true → opened from an option line: shows ALL option lines of the job (Seq order) + new row
+let pop = {rows:[], edit:false, all:false, groupId:0, focusLine:null, submitted:false};
+const seqOf = lineId => jobLines.findIndex(l => l.lineId === lineId) + 1;
+const newRow = () => ({optionId:null, length:'', qty:'', discount:'', price:'', manual:false, taxOn:true, rate:20, lineId:null, touched:{}});
+
+function calc(row){
+  const r = {unitPrice:0, auto:0, base:0, net:0, vat:0, gross:0, err:{}};
+  const o = opt(row.optionId);
+  if (!o) return r;
+  const m = mode(o), s = SALE[o.pricingId], q = parseInt(row.qty, 10);
+  if (m === 'length'){
+    const L = parseFloat(row.length);
+    if (!(L > 0)) r.err.length = 'Enter length';
+    else {
+      const mm = toMM(L, jobUnit), mtr = mm/1000;
+      if (s === 'per_m') r.unitPrice = mtr * o.rate;
+      else if (s === 'per_ft') r.unitPrice = mtr / 0.3048 * o.rate;
+      else if (s === 'per_in') r.unitPrice = mtr / 0.0254 * o.rate;
+      else {
+        const b = o.bands.find(b => mm <= b.upto);
+        if (b) r.unitPrice = b.price;
+        else r.err.length = `No price available for this length (max ${fmtLen(o.bands[o.bands.length-1].upto)})`;
+      }
+      if (o.hasStock && o.lpuMM && mm > o.lpuMM + 0.001) r.err.length = `Length exceeds stock length (${fmtLen(o.lpuMM)})`;
+    }
+  } else r.unitPrice = o.price || 0;
+
+  if (row.qty === '') r.err.qty = 'Enter qty';
+  else if (!(q >= 1)) r.err.qty = 'Min qty is 1';
+  const qq = q >= 1 ? q : 0;
+  r.unitPrice = r2(r.unitPrice);
+  r.auto = r2(r.unitPrice * qq);
+  r.base = row.manual ? (parseFloat(row.price) || 0) : r.auto;
+  const d = parseFloat(row.discount) || 0;
+  if (d > 100) r.err.discount = 'Max 100%';
+  r.net = r2(r.base * (1 - Math.min(d,100)/100));
+  r.vat = row.taxOn ? r2(r.net * row.rate / 100) : 0;
+  r.gross = r2(r.net + r.vat);
+  return r;
+}
+
+// stock check across all rows of the same option (stock On only),
+// including option lines already in the job that are not shown in this popup
+function calcAll(rows = pop.rows){
+  const res = rows.map(calc), usage = {};
+  const inPopup = new Set(rows.map(r => r.lineId).filter(Boolean));
+  jobLines.forEach(l => {
+    if (l.type !== 'option' || inPopup.has(l.lineId)) return;
+    const o = opt(l.optionId);
+    if (!o || !o.hasStock) return;
+    (usage[o.id] = usage[o.id] || {sum:0, rows:[]});
+    usage[o.id].sum += mode(o) === 'length' ? l.lengthMM * l.qty : l.qty;
+  });
+  rows.forEach((row, i) => {
+    const o = opt(row.optionId);
+    if (!o || !o.hasStock) return;
+    const q = parseInt(row.qty, 10) || 0;
+    let u = q;
+    if (mode(o) === 'length'){ const L = parseFloat(row.length); u = L > 0 ? toMM(L, jobUnit) * q : 0; }
+    (usage[o.id] = usage[o.id] || {sum:0, rows:[]});
+    usage[o.id].sum += u; usage[o.id].rows.push(i);
+  });
+  for (const id in usage){
+    const o = opt(+id), m = mode(o);
+    const avail = m === 'length' ? availOf(o) : o.stockQty;
+    const txt = m === 'qty' ? `${o.stockQty}` : m === 'fullpiece' ? `${o.stockQty} bars` : fmtLen(availOf(o));
+    if (usage[id].sum > avail + 0.001) usage[id].rows.forEach(i => { if (!res[i].err.qty) res[i].err.qty = `Out of stock (available: ${txt})`; });
+  }
+  return res;
+}
+
+const tb = $('rows');
+function rowHtml(row, i){
+  const o = opt(row.optionId), dis = !o, m = o ? mode(o) : null;
+  let lenCell;
+  if (m === 'length')
+    lenCell = `<div class="ig" data-w="length"><input data-f="length" inputmode="decimal" placeholder="Enter length" value="${esc(row.length)}"><span class="add">${UL[jobUnit]}</span></div><div class="err" data-e="length"></div>`;
+  else if (m === 'fullpiece')
+    lenCell = `<div class="ig lock"><input readonly value="${trim(fromMM(o.lpuMM, jobUnit))}"><span class="add"><i class="bi bi-lock-fill"></i>${UL[jobUnit]}</span></div><div class="hint">Sold as full bar</div>`;
+  else
+    lenCell = `<div class="ig dis"><input disabled placeholder="${o ? 'Not required' : '–'}"><span class="add">${UL[jobUnit]}</span></div>`;
+
+  const seq = row.lineId ? `<b>${seqOf(row.lineId)}</b>` : o ? '<span class="tag len" title="Seq is given on save (added at the end of the job)">New</span>' : '';
+  return `<tr data-i="${i}" class="${row.lineId && row.lineId === pop.focusLine ? 'is-focus' : ''}">
+    <td class="seqc">${seq}</td>
+    <td>
+      <div class="sel ${o ? '' : 'ph'}" data-act="open" tabindex="0"><span>${o ? esc(o.name) : 'Select'}</span><i class="bi bi-caret-down-fill"></i></div>
+      ${o ? `<div class="info">${modeTag(o)}<span>${rateText(o)}</span>${stockText(o)}</div>` : ''}
+    </td>
+    <td>${lenCell}</td>
+    <td><input class="inp" data-f="qty" inputmode="numeric" placeholder="Enter value" value="${esc(row.qty)}" ${dis ? 'disabled' : ''}><div class="err" data-e="qty"></div></td>
+    <td><div class="ig ${dis ? 'dis' : ''}" data-w="discount"><input data-f="discount" inputmode="decimal" placeholder="Enter discount" value="${esc(row.discount)}" ${dis ? 'disabled' : ''}><span class="add">%</span></div><div class="err" data-e="discount"></div></td>
+    <td><div class="ig ${dis ? 'dis' : ''}"><span class="add pre">£</span><input class="r" data-f="price" inputmode="decimal" placeholder="0.00" value="${row.manual ? esc(row.price) : ''}" ${dis ? 'disabled' : ''}></div><div class="hint" data-e="net"></div></td>
+    <td>
+      <div class="tax">
+        <label class="sw" title="Tax on / off"><input type="checkbox" data-f="taxon" ${row.taxOn ? 'checked' : ''} ${dis ? 'disabled' : ''}><span></span></label>
+        <select class="vsel" data-f="rate" ${dis || !row.taxOn ? 'disabled' : ''}>${RATES.map(v => `<option value="${v}" ${v === row.rate ? 'selected' : ''}>${v.toFixed(3)}%</option>`).join('')}</select>
+      </div>
+      <div class="hint" data-e="vatamt"></div>
+    </td>
+    <td class="gross" data-e="gross">${o ? '' : '<span style="color:#b8bcc5;font-weight:400">£0.00</span>'}</td>
+    <td>${o ? '<button class="del" data-act="del" title="Delete option"><i class="bi bi-trash3"></i></button>' : ''}</td>
+  </tr>`;
+}
+function renderRows(){ tb.innerHTML = pop.rows.map(rowHtml).join(''); paint(); }
+
+function paint(){
+  const res = calcAll();
+  let tq = 0, tn = 0, tv = 0, tg = 0;
+  pop.rows.forEach((row, i) => {
+    const o = opt(row.optionId);
+    if (!o) return;
+    const tr = tb.querySelector(`tr[data-i="${i}"]`), r = res[i];
+    tq += parseInt(row.qty, 10) || 0; tn += r.net; tv += r.vat; tg += r.gross;
+    const p = tr.querySelector('[data-f=price]');
+    if (!row.manual && document.activeElement !== p) p.value = r.auto ? r.auto.toFixed(2) : '';
+    ['length','qty','discount'].forEach(k => {
+      const e = tr.querySelector(`[data-e=${k}]`);
+      if (!e) return;
+      let msg = r.err[k] || '';
+      if (msg.startsWith('Enter') && !row.touched[k] && !pop.submitted) msg = '';
+      e.textContent = msg;
+      e.classList.toggle('on', !!msg);
+      const w = k === 'qty' ? tr.querySelector('[data-f=qty]') : tr.querySelector(`[data-w=${k}]`);
+      if (w) w.classList.toggle('invalid', !!msg);
+    });
+    const d = parseFloat(row.discount) || 0, q = parseInt(row.qty, 10) || 0;
+    let h = '';
+    if (row.manual) h += `<span class="manual"><i class="bi bi-pencil-square"></i> Manual price<a data-act="reset">Reset</a></span>`;
+    else if (r.unitPrice && q >= 1) h += `<div>${money(r.unitPrice)} × ${q}</div>`;
+    if (d > 0 && d <= 100) h += `<div>After ${trim(d)}%: <b>${money(r.net)}</b></div>`;
+    tr.querySelector('[data-e=net]').innerHTML = h;
+    tr.querySelector('[data-e=vatamt]').innerHTML = row.taxOn ? `Tax ${money(r.vat)}` : '<span style="color:var(--orange)">Tax off · £0.00</span>';
+    tr.querySelector('[data-e=gross]').textContent = money(r.gross);
+  });
+  $('tQty').textContent = tq;
+  $('tNet').textContent = money(tn);
+  $('tVat').textContent = money(tv);
+  $('tGross').textContent = money(tg);
+}
+
+function cleanNum(v){
+  v = v.replace(/[^\d.]/g, '');
+  const parts = v.split('.');
+  return parts.shift() + (parts.length ? '.' + parts.join('').slice(0,2) : '');
+}
+tb.addEventListener('input', e => {
+  const f = e.target.dataset.f;
+  if (!f || f === 'taxon' || f === 'rate') return;
+  const row = pop.rows[+e.target.closest('tr').dataset.i];
+  const v = f === 'qty' ? e.target.value.replace(/\D/g, '') : cleanNum(e.target.value);
+  if (v !== e.target.value) e.target.value = v;
+  if (f === 'price'){ row.manual = true; row.price = v; } else row[f] = v;
+  row.touched[f] = true;
+  paint();
+});
+tb.addEventListener('change', e => {
+  const f = e.target.dataset.f;
+  if (f !== 'taxon' && f !== 'rate') return;
+  const tr = e.target.closest('tr'), row = pop.rows[+tr.dataset.i];
+  if (f === 'taxon'){ row.taxOn = e.target.checked; tr.querySelector('[data-f=rate]').disabled = !row.taxOn; }
+  else row.rate = +e.target.value;
+  paint();
+});
+tb.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  const i = +a.closest('tr').dataset.i;
+  if (a.dataset.act === 'open') openDD(i, a);
+  else if (a.dataset.act === 'del') confirmBox({title:'Delete', html:'<p>Are you sure you want to delete this option from the order?</p>', onOk:() => {
+    pop.rows.splice(i, 1);
+    if (!pop.rows.length || pop.rows[pop.rows.length-1].optionId) pop.rows.push(newRow());
+    renderRows();
+    toast('Option removed. Totals recalculated.');
+  }});
+  else if (a.dataset.act === 'reset'){ pop.rows[i].manual = false; pop.rows[i].price = ''; paint(); }
+});
+tb.addEventListener('keydown', e => {
+  const s = e.target.closest('.sel');
+  if (s && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openDD(+s.closest('tr').dataset.i, s); }
+});
+
+/* ---- option dropdown in job popup ---- */
+const dd = $('dd'), ddList = $('ddList'), ddSearch = $('ddSearch');
+let ddRow = null, ddAnchor = null, expanded = new Set();
+function placePanel(panel, anchor, minW){
+  const r = anchor.getBoundingClientRect();
+  panel.style.left = r.left + 'px';
+  panel.style.width = Math.max(r.width, minW) + 'px';
+  const below = innerHeight - r.bottom;
+  if (below < 370 && r.top > below){ panel.style.top = ''; panel.style.bottom = (innerHeight - r.top + 4) + 'px'; }
+  else { panel.style.bottom = ''; panel.style.top = (r.bottom + 4) + 'px'; }
+}
+function openDD(i, anchor){
+  closeFloating();
+  ddRow = i; ddAnchor = anchor;
+  anchor.classList.add('open');
+  ddSearch.value = '';
+  renderDD();
+  dd.classList.add('open');
+  placePanel(dd, anchor, 340);
+  ddSearch.focus();
+}
+function closeDD(){ dd.classList.remove('open'); if (ddAnchor) ddAnchor.classList.remove('open'); ddRow = null; ddAnchor = null; }
+// "Options" is the default group (a sibling of Screws, Motors...), so it lists only options linked to it
+const scopeOptions = () => sellable().filter(o => pop.all || (pop.groupId === 0 ? o.groupId === 0 : isUnder(o.groupId, pop.groupId)));
+// Each/Set/Full bar can be added once per job (edit the existing line's qty instead); Length options can repeat
+function usedElsewhere(o){
+  if (mode(o) === 'length') return false;
+  const inPopup = new Set(pop.rows.map(r => r.lineId).filter(Boolean));
+  return pop.rows.some((r, j) => j !== ddRow && r.optionId === o.id)
+      || jobLines.some(l => l.type === 'option' && l.optionId === o.id && !inPopup.has(l.lineId));
+}
+function itemHtml(o, depth, showPath){
+  const used = usedElsewhere(o), p = gpath(o.groupId);
+  return `<div class="dd-item ${used ? 'dis' : ''}" data-o="${o.id}" style="padding-left:${12 + depth*16}px">
+    <span class="nm">${esc(o.name)}${showPath && p.length ? `<span class="pth">${esc(p.join(' › '))}</span>` : ''}</span>
+    ${used ? '<span class="tag">Added</span>' : modeTag(o)}</div>`;
+}
+function ddTree(gid, depth, scope){
+  const out = [];
+  scope.filter(o => o.groupId === gid).forEach(o => out.push(itemHtml(o, depth, false)));
+  if (gid === 0 && !pop.all) return out;
+  kids(gid).forEach(c => {
+    if (!scope.some(o => isUnder(o.groupId, c.id))) return;
+    const ex = expanded.has(c.id);
+    out.push(`<div class="dd-group" data-g="${c.id}" style="padding-left:${12 + depth*16}px"><i class="bi bi-chevron-${ex ? 'down' : 'right'}"></i>${esc(c.name)}</div>`);
+    if (ex) out.push(...ddTree(c.id, depth + 1, scope));
+  });
+  return out;
+}
+function renderDD(){
+  const q = ddSearch.value.trim().toLowerCase(), scope = scopeOptions();
+  if (q){
+    const m = scope.filter(o => o.name.toLowerCase().includes(q) || (o.code || '').toLowerCase().includes(q));
+    ddList.innerHTML = m.length ? m.map(o => itemHtml(o, 0, true)).join('') : '<div class="dd-none">No options found</div>';
+    return;
+  }
+  ddList.innerHTML = ddTree(pop.groupId, 0, scope).join('') || '<div class="dd-none">No sellable options in this group</div>';
+}
+ddSearch.addEventListener('input', renderDD);
+ddList.addEventListener('click', e => {
+  const g = e.target.closest('.dd-group');
+  if (g){ const id = +g.dataset.g; expanded.has(id) ? expanded.delete(id) : expanded.add(id); renderDD(); return; }
+  const it = e.target.closest('.dd-item');
+  if (it && !it.classList.contains('dis')) selectOption(+it.dataset.o);
+});
+function selectOption(id){
+  const i = ddRow, row = pop.rows[i];
+  Object.assign(row, {optionId:id, length:'', qty:'1', discount:'', price:'', manual:false, touched:{}});
+  if (i === pop.rows.length - 1) pop.rows.push(newRow());
+  closeDD();
+  renderRows();
+  const tr = tb.querySelector(`tr[data-i="${i}"]`);
+  if (mode(opt(id)) === 'length') tr.querySelector('[data-f=length]').focus();
+  else tr.querySelector('[data-f=qty]').select();
+}
+$('twrap').addEventListener('scroll', closeDD);
+
+const lineToRow = l => ({
+  optionId:l.optionId,
+  length: opt(l.optionId) && mode(opt(l.optionId)) === 'length' ? trim(fromMM(l.lengthMM, jobUnit)) : '',
+  qty:String(l.qty), discount:l.discount, price:l.manual ? l.base.toFixed(2) : '', manual:l.manual,
+  taxOn:l.taxOn, rate:l.rate, lineId:l.lineId, touched:{}
+});
+// Add product › <group>  → openPopup(groupId): new lines only, dropdown limited to that group
+// Click an option line   → openPopup(null, lineId): every option line in the job (Seq order), clicked line highlighted
+function openPopup(groupId, focusLine){
+  const edit = focusLine != null;
+  pop = {rows:[], edit, all:edit, groupId: edit ? 0 : (groupId ?? 0), focusLine: focusLine || null, submitted:false};
+  if (edit) pop.rows = jobLines.filter(l => l.type === 'option').map(lineToRow);
+  pop.rows.push(newRow());
+  expanded = new Set(pop.all || pop.groupId === 0 ? [] : GROUPS.filter(g => g.id !== pop.groupId && isUnder(g.id, pop.groupId)).map(g => g.id));
+  $('popTitle').textContent = edit ? 'Options' : G(pop.groupId).name;
+  $('metaMode').innerHTML = edit
+    ? `<i class="bi bi-list-ol"></i>Showing <b>all ${pop.rows.length - 1} option lines</b> in this job, in job Seq order`
+    : '<i class="bi bi-plus-circle"></i>New lines are added at the <b>end of the job</b>';
+  $('metaUnit').textContent = UL[jobUnit];
+  renderRows();
+  $('popup').classList.add('open');
+  if (focusLine){
+    const tr = tb.querySelector('tr.is-focus');
+    if (tr){ tr.scrollIntoView({block:'center'}); const f = tr.querySelector('[data-f=length]') || tr.querySelector('[data-f=qty]'); f && f.focus(); }
+  }
+}
+
+// cost follows the same rule as the selling price (unit cost per piece, or per m/ft/in × length)
+function costUnit(o, lengthMM){
+  const s = SALE[o.pricingId], mtr = (lengthMM || 0) / 1000;
+  if (mode(o) === 'length'){
+    if (s === 'per_m') return r2(mtr * o.cost);
+    if (s === 'per_ft') return r2(mtr / 0.3048 * o.cost);
+    if (s === 'per_in') return r2(mtr / 0.0254 * o.cost);
+  }
+  return o.cost || 0;
+}
+
+function buildLine(r, x){
+  const o = opt(r.optionId), m = mode(o), q = parseInt(r.qty, 10);
+  const lengthMM = m === 'length' ? toMM(parseFloat(r.length), jobUnit) : m === 'fullpiece' ? o.lpuMM : null;
+  const cu = costUnit(o, lengthMM);
+  return {type:'option', lineId:r.lineId || ++lineSeq, optionId:o.id, name:o.name, lengthMM,
+    costUnit:cu, cost:r2(cu * q), qty:q, discount:r.discount, manual:r.manual, taxOn:r.taxOn, rate:r.rate,
+    unitPrice:r2(x.base / q), base:x.base, net:x.net, vatAmt:x.vat, gross:x.gross};
+}
+// Existing lines are updated in place (keep their Seq); new lines go to the end; lines deleted in the popup leave the job
+function commit(rows, res, edit){
+  if (edit){
+    const keep = new Set(rows.filter(r => r.optionId && r.lineId).map(r => r.lineId));
+    jobLines = jobLines.filter(l => l.type !== 'option' || keep.has(l.lineId));
+  }
+  rows.forEach((r, i) => {
+    if (!r.optionId) return;
+    const line = buildLine(r, res[i]);
+    const at = r.lineId ? jobLines.findIndex(l => l.lineId === r.lineId) : -1;
+    if (at < 0) jobLines.push(line); else jobLines[at] = line;
+  });
+}
+$('saveBtn').addEventListener('click', () => {
+  pop.submitted = true;
+  const res = calcAll();
+  paint();
+  const filled = pop.rows.filter(r => r.optionId);
+  if (pop.rows.some((r, i) => r.optionId && Object.keys(res[i].err).length)){
+    toast('Fix the highlighted fields before saving', true);
+    const bad = tb.querySelector('.err.on');
+    bad && bad.closest('tr').scrollIntoView({block:'center'});
+    return;
+  }
+  if (!filled.length && !pop.edit){ toast('Select at least one option', true); return; }
+  commit(pop.rows, res, pop.edit);
+  closeModal('popup');
+  renderGrid();
+  toast(filled.length ? `${filled.length} option line${filled.length > 1 ? 's' : ''} saved to the job` : 'All option lines removed from the job');
+});
+
+/* ---- job grid ---- */
+// Products and option lines share one grid and one Seq order
+function renderGrid(){
+  const gb = $('gridBody');
+  const vatCell = l => l.taxOn ? `${money(l.vatAmt)} <span class="muted">(${l.rate}%)</span>` : '<span class="chip off">Tax off</span>';
+  if (!jobLines.length){
+    gb.innerHTML = `<tr><td colspan="14" class="empty"><i class="bi bi-inbox"></i>No products yet. Use <b>Add product</b>.</td></tr>`;
+  } else {
+    const arrow = l => `<button class="exp" data-exp title="${openLines.has(l.lineId) ? 'Collapse' : 'Expand'}"><i class="bi bi-chevron-${openLines.has(l.lineId) ? 'up' : 'down'}"></i></button>`;
+    const tail = `<td><div class="act"><i class="bi bi-three-dots-vertical"></i><i class="bi bi-grip-vertical grip" title="Drag to change Seq"></i></div></td>`;
+    gb.innerHTML = jobLines.map((l, k) => {
+      let row, det;
+      if (l.type === 'product'){
+        row = `<tr data-line="${l.lineId}" draggable="true">
+          <td><input type="checkbox" data-nostop></td><td>${arrow(l)}</td>
+          <td>${k + 1}</td><td style="font-weight:500">${esc(l.name)}</td><td class="desc" title="${esc(l.desc)}">${esc(l.desc)}</td>
+          <td class="num">${money(l.cost)}</td><td class="num">${l.qty}</td>
+          <td><select class="gsel" data-nostop><option>Select</option><option>Ready</option></select></td>
+          <td class="na">-</td><td class="num">${money(l.cost / l.qty)}</td>
+          <td class="num">${money(l.net)}</td><td class="num">${vatCell(l)}</td><td class="num">${money(l.gross)}</td>${tail}</tr>`;
+        det = Object.entries(l.fields).slice(0, 5).map(([k2, v]) => `<span>${esc(k2)} : <b>${esc(v)}</b></span>`).join('');
+      } else {
+        const o = opt(l.optionId);
+        const nm = l.name + (l.lengthMM != null ? ` – ${fmtLen(l.lengthMM)}` : '');
+        const disc = parseFloat(l.discount) > 0 ? `${trim(parseFloat(l.discount))}%` : '';
+        row = `<tr data-line="${l.lineId}" class="opt-row" draggable="true">
+          <td><input type="checkbox" data-nostop></td><td>${arrow(l)}</td>
+          <td>${k + 1}</td>
+          <td><span class="pname"><i class="bi bi-box-seam"></i>${esc(nm)}</span><span class="ptag">Option</span></td>
+          <td class="desc">${esc(o ? groupLabel(G(o.groupId) ? o.groupId : 0) : 'Options')}</td>
+          <td class="num">${money(l.cost)}</td><td class="num">${l.qty}</td>
+          <td class="na" title="Options do not go to production">-</td>
+          <td>${disc ? disc + ' disc.' : (l.manual ? 'Manual price' : '<span class="na">-</span>')}</td>
+          <td class="num">${money(l.costUnit)}</td>
+          <td class="num">${money(l.net)}</td><td class="num">${vatCell(l)}</td><td class="num">${money(l.gross)}</td>${tail}</tr>`;
+        det = `<span>Length : <b>${l.lengthMM != null ? fmtLen(l.lengthMM) : '-'}</b></span><span>Qty : <b>${l.qty}</b></span>
+          <span>Discount : <b>${disc || '-'}</b></span><span>Price : <b>${l.base.toFixed(2)}</b></span>
+          <span>Tax : <b>${l.taxOn ? l.rate + '%' : 'Off'}</b></span><span>Gross : <b>${l.gross.toFixed(2)}</b></span>`;
+      }
+      if (!openLines.has(l.lineId)) return row;
+      return row + `<tr class="detail" data-detail="${l.lineId}"><td colspan="14"><div class="det">${det}
+        <div class="r"><i class="bi bi-qr-code qr"></i><button class="btn btn-out" data-edit="${l.lineId}"><i class="bi bi-pencil-square"></i>Edit</button></div></div></td></tr>`;
+    }).join('');
+  }
+  const sum = k => jobLines.reduce((a, l) => a + l[k], 0);
+  const tq = sum('qty'), tn = sum('net'), tv = sum('vatAmt'), tg = sum('gross');
+  $('gridFoot').innerHTML = `<tr><td></td><td></td><td></td><td>Total</td><td></td><td class="num">${money(sum('cost'))}</td><td class="num">${tq}</td><td></td><td></td><td></td>
+    <td class="num">${money(tn)}</td><td class="num">${money(tv)}</td><td class="num">${money(tg)}</td><td></td></tr>`;
+  $('pdNet').textContent = money(tn);
+  $('pdVat').textContent = money(tv);
+  $('pdGross').textContent = money(tg);
+  $('pdOut').textContent = money(tg);
+}
+const openLines = new Set();
+function openLine(l){
+  if (l.type === 'product') openProduct(l);
+  else openPopup(null, l.lineId);   // all job options, clicked line highlighted
+}
+$('gridBody').addEventListener('click', e => {
+  if (e.target.closest('[data-nostop]') || e.target.closest('.grip')) return;
+  const ed = e.target.closest('[data-edit]');
+  if (ed){ openLine(jobLines.find(l => l.lineId === +ed.dataset.edit)); return; }
+  const tr = e.target.closest('tr[data-line]');
+  if (!tr) return;
+  const id = +tr.dataset.line;
+  if (e.target.closest('[data-exp]')){ openLines.has(id) ? openLines.delete(id) : openLines.add(id); renderGrid(); return; }
+  openLine(jobLines.find(l => l.lineId === id));
+});
+
+/* ---- drag rows to change Seq (same for products and options) ---- */
+let dragId = null;
+const gbody = $('gridBody');
+gbody.addEventListener('dragstart', e => {
+  const tr = e.target.closest('tr[data-line]');
+  if (!tr) return;
+  dragId = +tr.dataset.line;
+  tr.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(dragId));
+});
+gbody.addEventListener('dragover', e => {
+  const tr = e.target.closest('tr[data-line]');
+  if (dragId == null || !tr) return;
+  e.preventDefault();
+  gbody.querySelectorAll('.drop-before,.drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after'));
+  if (+tr.dataset.line === dragId) return;
+  const r = tr.getBoundingClientRect();
+  tr.classList.add(e.clientY < r.top + r.height / 2 ? 'drop-before' : 'drop-after');
+});
+gbody.addEventListener('drop', e => {
+  e.preventDefault();
+  const tr = gbody.querySelector('.drop-before,.drop-after');
+  if (dragId == null || !tr) return;
+  const before = tr.classList.contains('drop-before');
+  const moving = jobLines.find(l => l.lineId === dragId);
+  jobLines = jobLines.filter(l => l.lineId !== dragId);
+  let at = jobLines.findIndex(l => l.lineId === +tr.dataset.line);
+  if (!before) at++;
+  jobLines.splice(at, 0, moving);
+  renderGrid();
+  toast(`${moving.name} moved to Seq ${seqOf(moving.lineId)}`);
+});
+gbody.addEventListener('dragend', () => {
+  dragId = null;
+  gbody.querySelectorAll('.dragging,.drop-before,.drop-after').forEach(x => x.classList.remove('dragging', 'drop-before', 'drop-after'));
+});
+
+/* ---- product popup (existing live behaviour, simplified) ---- */
+let ppLine = null;
+$('ppRate').innerHTML = RATES.map(v => `<option value="${v}">${v}%</option>`).join('');
+function ppPaint(){
+  const on = $('ppTaxOn').checked, rate = +$('ppRate').value;
+  const vat = on ? r2(ppLine.net * rate / 100) : 0;
+  $('ppRate').disabled = !on;
+  $('ppCost').textContent = ppLine.cost.toFixed(2) + ' £';
+  $('ppNet').textContent = ppLine.net.toFixed(2) + ' £';
+  $('ppVat').textContent = vat.toFixed(2) + ' £';
+  $('ppGross').textContent = r2(ppLine.net + vat).toFixed(2) + ' £';
+}
+function openProduct(l){
+  ppLine = l;
+  const seq = jobLines.indexOf(l) + 1;
+  $('ppTitle').textContent = `Seq ${seq} - ${l.name} Info`;
+  $('ppRecipe').textContent = l.recipe;
+  $('ppFields').innerHTML = Object.entries(l.fields).map(([k, v]) => `<label>${esc(k)}</label><input class="inp" value="${esc(v)}" readonly>`).join('');
+  $('ppTaxOn').checked = l.taxOn;
+  $('ppRate').value = l.rate;
+  ppPaint();
+  $('ppop').classList.add('open');
+}
+$('ppTaxOn').addEventListener('change', ppPaint);
+$('ppRate').addEventListener('change', ppPaint);
+$('ppSave').addEventListener('click', () => {
+  ppLine.taxOn = $('ppTaxOn').checked;
+  ppLine.rate = +$('ppRate').value;
+  ppLine.vatAmt = ppLine.taxOn ? r2(ppLine.net * ppLine.rate / 100) : 0;
+  ppLine.gross = r2(ppLine.net + ppLine.vatAmt);
+  closeModal('ppop');
+  renderGrid();
+  toast(`${ppLine.name} saved`);
+});
+
+function renderAddMenu(){
+  $('menuOpts').innerHTML = [G(0), ...kids(0)].map(g => `<div class="menu-item" data-group="${g.id}">${esc(g.name)}</div>`).join('');
+}
+$('addBtn').addEventListener('click', () => $('addMenu').classList.toggle('open'));
+$('addMenu').addEventListener('click', e => {
+  const it = e.target.closest('.menu-item');
+  if (!it) return;
+  $('addMenu').classList.remove('open');
+  if (it.dataset.group != null) openPopup(+it.dataset.group);
+  else toast('Product configuration is outside this prototype', true);
+});
+$('jobUnit').addEventListener('change', e => { jobUnit = e.target.value; renderGrid(); });
+
+/* =========================================================
+   OPTION SETUP: LIST
+   ========================================================= */
+function availText(o){
+  if (!o.hasStock) return '<span class="muted">-</span>';
+  const u = unitOf(o);
+  return u && u.kind === 'len' ? `${o.stockQty} × ${lenInUnit(o.lpuMM, u)}` : `${o.stockQty}`;
+}
+function renderOptionList(){
+  $('optBody').innerHTML = OPTIONS.map(o => {
+    const e = elig(o);
+    const sold = o.sold ? (e.ok ? '<span class="chip ok"><i class="bi bi-check-circle-fill"></i>Yes</span>' : '<span class="chip off">Check rules</span>') : '<span class="muted">-</span>';
+    return `<tr data-opt="${o.id}">
+      <td><input type="checkbox" data-nostop></td>
+      <td style="font-weight:500">${esc(o.name)}</td><td>${esc(o.code || '-')}</td><td>${esc(o.supplier)}</td>
+      <td>${o.hasPrice ? esc(pricingName(o.pricingId)) : '<span class="muted">No price</span>'}</td>
+      <td>${o.hasStock ? '<span class="chip ok">On</span>' : '<span class="chip">Off</span>'}</td>
+      <td>${o.hasStock && unitOf(o) ? unitOf(o).name : '<span class="muted">-</span>'}</td>
+      <td class="num">${availText(o)}</td>
+      <td>${sold}</td>
+      <td>${o.sold ? esc(groupLabel(o.groupId)) : '<span class="muted">-</span>'}</td>
+      <td><div class="act"><i class="bi bi-three-dots-vertical"></i></div></td>
+    </tr>`;
+  }).join('');
+}
+$('optBody').addEventListener('click', e => {
+  if (e.target.closest('[data-nostop]')) return;
+  const tr = e.target.closest('tr[data-opt]');
+  if (tr) openForm(+tr.dataset.opt);
+});
+$('addOptBtn').addEventListener('click', () => openForm(null));
+
+/* =========================================================
+   OPTION SETUP: ADD / EDIT FORM
+   ========================================================= */
+let form = null;
+const blankForm = () => ({id:null, name:'', code:'', supplier:SUPPLIERS[0], hasPrice:true, pricingId:1, cost:'', price:'', rate:'',
+  bands:[{upto:'1000', price:''}], hasStock:false, unitId:5, lpu:'', stockQty:'', sold:false, groupId:0, backorder:false, noMultiply:false});
+function toForm(o){
+  const u = unitOf(o);
+  return {...blankForm(), ...o,
+    cost: o.cost != null ? String(o.cost) : '', price: o.price != null ? String(o.price) : '', rate: o.rate != null ? String(o.rate) : '',
+    bands: o.bands ? o.bands.map(b => ({upto:String(b.upto), price:String(b.price)})) : [{upto:'1000', price:''}],
+    lpu: o.lpuMM && u && u.kind === 'len' ? trim(o.lpuMM / u.f) : '',
+    stockQty: o.stockQty != null ? String(o.stockQty) : '', unitId: o.unitId || 5};
+}
+// form → option-shaped object (used for rules + save)
+function formOpt(){
+  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
+  return {...form, pricingId:+form.pricingId, unitId:+form.unitId,
+    cost:parseFloat(form.cost) || 0, price:parseFloat(form.price) || 0, rate:parseFloat(form.rate) || 0,
+    bands: form.bands.filter(b => parseFloat(b.upto) > 0 && b.price !== '').map(b => ({upto:parseFloat(b.upto), price:parseFloat(b.price) || 0})).sort((a,b) => a.upto - b.upto),
+    lpuMM: u && u.kind === 'len' && parseFloat(form.lpu) > 0 ? parseFloat(form.lpu) * u.f : null,
+    stockQty: parseFloat(form.stockQty) || 0};
+}
+function openForm(id){
+  form = id ? toForm(opt(id)) : blankForm();
+  $('oformTitle').textContent = id ? 'Edit option' : 'Add option';
+  renderForm();
+  $('oform').classList.add('open');
+}
+
+const SOLD_TIP = 'Tick if this component can be sold on its own, without a finished product. Works with Fixed, Price per meter/inch/foot and Width/Drop prices. Stock On: Each/Set need Fixed pricing; Length needs "Length per unit".';
+function soldCellHtml(){
+  const e = elig(formOpt()), lock = !e.ok && !form.sold;
+  let msg = '';
+  if (!e.ok) msg = form.sold ? `<div class="err on">Cannot save: ${esc(e.reason)}</div>` : `<div class="warn"><i class="bi bi-exclamation-triangle"></i> Not available: ${esc(e.reason)}</div>`;
+  return `<div class="cbrow"><input type="checkbox" class="cb" data-k="sold" ${form.sold ? 'checked' : ''} ${lock ? 'disabled' : ''}>
+    <i class="bi bi-info-circle tip" data-tip="${esc(SOLD_TIP)}"></i></div>${msg}`;
+}
+function grpCellHtml(){
+  if (!form.sold) return '';
+  return `<div class="sel" id="grpSel" tabindex="0"><span>${esc(groupLabel(form.groupId))}</span><i class="bi bi-caret-down-fill"></i></div>
+    <div class="hint">Shown in Job › Add product › <b>${esc(topGroup(form.groupId))}</b></div>`;
+}
+function summaryHtml(){
+  if (!form.sold) return '';
+  const o = formOpt(), e = elig(o);
+  if (!e.ok) return `<div class="sold-box bad"><i class="bi bi-exclamation-triangle"></i><div><b>Not sellable yet</b><br>${esc(e.reason)}</div></div>`;
+  const u = unitOf(o);
+  const how = {
+    qty: `<b>Sold as: ${o.hasStock ? u.name : 'Each'}</b> · user enters <b>Qty</b> in the job popup`,
+    length: `<b>Sold as: Length</b> (${esc(pricingName(o.pricingId))}) · user enters <b>Length + Qty</b>; price uses the length`,
+    fullpiece: `<b>Sold as: Full bar</b> of ${u ? lenInUnit(o.lpuMM, u) : ''} · Length is locked, user enters <b>Qty</b> (bars)`
+  }[e.mode];
+  const stock = !o.hasStock ? 'Stock off: no stock check and no deduction in the job.'
+    : e.mode === 'qty' ? `Stock check in job: Qty ≤ ${o.stockQty}.`
+    : e.mode === 'fullpiece' ? `Stock check in job: bars ≤ ${o.stockQty}. Deducts Qty × ${lenInUnit(o.lpuMM, u)}.`
+    : `Stock check in job: Length ≤ ${lenInUnit(o.lpuMM, u)} per piece and Length × Qty ≤ ${lenInUnit(o.lpuMM * o.stockQty, u)} total.`;
+  return `<div class="sold-box"><i class="bi bi-bag-check"></i><div>${how}<br>${stock}</div></div>`;
+}
+function updateSold(){
+  $('soldCell').innerHTML = soldCellHtml();
+  $('grpLbl').textContent = form.sold ? 'Option group' : '';
+  $('grpCell').innerHTML = grpCellHtml();
+  $('soldSummary').innerHTML = summaryHtml();
+}
+
+function priceSecHtml(){
+  if (!form.hasPrice) return `<div class="fnote"><i class="bi bi-info-circle"></i>Price is off. This option adds no price and cannot be sold separately.</div>`;
+  const sellIds = Object.keys(SALE).map(Number);
+  const op = p => `<option value="${p.id}" ${p.id === +form.pricingId ? 'selected' : ''}>${esc(p.name)}</option>`;
+  const s = SALE[+form.pricingId];
+  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
+  const per = !form.hasStock ? 'each' : u.kind === 'qty' ? u.name.toLowerCase() : 'bar';
+  let field = '';
+  if (s === 'fixed')
+    field = `<label>Selling price</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="price" inputmode="decimal" value="${esc(form.price)}" placeholder="0.00"><span class="add">/ ${per}</span></div></div>`;
+  else if (s === 'per_m' || s === 'per_in' || s === 'per_ft')
+    field = `<label>Selling rate</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="rate" inputmode="decimal" value="${esc(form.rate)}" placeholder="0.00"><span class="add">/ ${{per_m:'m', per_in:'in', per_ft:'ft'}[s]}</span></div></div>`;
+  else if (s === 'band')
+    field = `<label></label><div></div>
+      <label style="grid-column:1">${+form.pricingId === 4 ? 'Drop' : 'Width'} price bands</label>
+      <div class="bands"><table>
+        <thead><tr><th>Up to length (mm)</th><th>Selling price (£)</th><th style="width:40px"></th></tr></thead>
+        <tbody>${form.bands.map((b, i) => `<tr>
+          <td><input class="inp" data-b="${i}" data-bk="upto" inputmode="decimal" value="${esc(b.upto)}"></td>
+          <td><input class="inp r" data-b="${i}" data-bk="price" inputmode="decimal" value="${esc(b.price)}" placeholder="0.00"></td>
+          <td><button class="del" data-act="rmband" data-b="${i}" title="Remove band"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}</tbody>
+      </table><button class="lnk" data-act="addband"><i class="bi bi-plus-lg"></i> Add band</button></div>`;
+  else
+    field = `<div class="fnote"><i class="bi bi-info-circle"></i>This pricing type is calculated from the product's width/drop or price table, so it can only be used inside products.</div>`;
+  return `<label>Pricing type</label>
+    <div><select class="vsel" data-k="pricingId">
+      <optgroup label="Can be sold separately">${PRICING.filter(p => sellIds.includes(p.id)).map(op).join('')}</optgroup>
+      <optgroup label="Product only (needs width/drop or price table)">${PRICING.filter(p => !sellIds.includes(p.id)).map(op).join('')}</optgroup>
+    </select></div>
+    <label>Unit cost</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="cost" inputmode="decimal" value="${esc(form.cost)}" placeholder="0.00"></div></div>
+    ${field}`;
+}
+function stockSecHtml(){
+  if (!form.hasStock) return `<div class="fnote"><i class="bi bi-info-circle"></i>Stock is off. Unit type is not needed. If sold separately: no stock check and no deduction in jobs. Pricing type alone decides Qty or Length entry.</div>`;
+  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
+  const unitSel = `<label>Unit type</label><div><select class="vsel" data-k="unitId">
+      <optgroup label="Quantity">${UNIT_TYPES.filter(x => x.kind === 'qty').map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${x.name}</option>`).join('')}</optgroup>
+      <optgroup label="Length">${UNIT_TYPES.filter(x => x.kind === 'len').map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${x.name}</option>`).join('')}</optgroup>
+    </select></div>`;
+  if (u.kind === 'qty')
+    return `${unitSel}<label>Available qty</label><div><input class="inp r" data-k="stockQty" inputmode="numeric" value="${esc(form.stockQty)}" placeholder="0"></div>`;
+  const total = (parseFloat(form.lpu) || 0) * (parseFloat(form.stockQty) || 0);
+  return `${unitSel}<label>Length per unit</label><div><div class="ig"><input class="r" data-k="lpu" inputmode="decimal" value="${esc(form.lpu)}" placeholder="e.g. 6000"><span class="add">${u.ab}</span></div></div>
+    <label>Units in stock</label><div><input class="inp r" data-k="stockQty" inputmode="numeric" value="${esc(form.stockQty)}" placeholder="0"><div class="hint" id="lenTotal">Total length: ${trim(total)} ${u.ab}</div></div>`;
+}
+function renderForm(){
+  $('oformBody').innerHTML = `
+    <div class="sec-bar">Option details</div>
+    <div class="fgrid">
+      <label>Option name</label><div><input class="inp req" data-k="name" value="${esc(form.name)}" placeholder="Enter option name"><div class="err" id="nameErr">Enter option name</div></div>
+      <label>Option code</label><div><input class="inp" data-k="code" value="${esc(form.code)}" placeholder="Enter code"></div>
+      <label>Option image</label><div><div class="ig"><input value="bride_left.png" readonly><span class="add" style="background:#fff"><i class="bi bi-trash3" style="color:var(--red)"></i></span></div></div>
+      <label>Image placement</label><div><select class="vsel"><option>Thumbnail</option><option>Full</option></select></div>
+      <label>Supplier</label><div><select class="vsel" data-k="supplier">${SUPPLIERS.map(s => `<option ${s === form.supplier ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <label>Option Qty</label><div><input class="inp" value="1"></div>
+      <label>Do not multiply with product quantity</label><div class="cbrow"><input type="checkbox" class="cb" data-k="noMultiply" ${form.noMultiply ? 'checked' : ''}><i class="bi bi-info-circle tip" data-tip="Option qty is not multiplied by the product quantity."></i></div>
+      <label>Enable for backorder</label><div class="cbrow"><label class="sw"><input type="checkbox" data-k="backorder" ${form.backorder ? 'checked' : ''}><span></span></label></div>
+      <label>Can be sold separately</label><div id="soldCell"></div>
+      <label id="grpLbl"></label><div id="grpCell"></div>
+    </div>
+    <div class="sec-bar">Price<span class="bar-r">Option has price <label class="sw inv"><input type="checkbox" data-k="hasPrice" ${form.hasPrice ? 'checked' : ''}><span></span></label></span></div>
+    <div class="fgrid">${priceSecHtml()}</div>
+    <div class="sec-bar">Stock<span class="bar-r">Option has stock <label class="sw inv"><input type="checkbox" data-k="hasStock" ${form.hasStock ? 'checked' : ''}><span></span></label></span></div>
+    <div class="fgrid">${stockSecHtml()}</div>
+    <div id="soldSummary"></div>`;
+  updateSold();
+}
+const STRUCT_KEYS = ['hasPrice', 'hasStock', 'pricingId', 'unitId', 'sold'];
+$('oformBody').addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.b != null){ form.bands[+t.dataset.b][t.dataset.bk] = cleanNum(t.value); if (t.value !== form.bands[+t.dataset.b][t.dataset.bk]) t.value = form.bands[+t.dataset.b][t.dataset.bk]; updateSold(); return; }
+  const k = t.dataset.k;
+  if (!k || t.type === 'checkbox' || t.tagName === 'SELECT') return;
+  if (['cost','price','rate','lpu'].includes(k)){ const v = cleanNum(t.value); if (v !== t.value) t.value = v; }
+  if (k === 'stockQty'){ const v = t.value.replace(/\D/g, ''); if (v !== t.value) t.value = v; }
+  form[k] = t.value;
+  if (k === 'name') { $('nameErr').classList.remove('on'); t.classList.remove('invalid'); }
+  if ((k === 'lpu' || k === 'stockQty') && $('lenTotal')){
+    const u = UNIT_TYPES.find(u => u.id === +form.unitId);
+    $('lenTotal').textContent = `Total length: ${trim((parseFloat(form.lpu) || 0) * (parseFloat(form.stockQty) || 0))} ${u.ab}`;
+  }
+  updateSold();
+});
+$('oformBody').addEventListener('change', e => {
+  const t = e.target, k = t.dataset.k;
+  if (!k) return;
+  if (t.type === 'checkbox') form[k] = t.checked;
+  else if (t.tagName === 'SELECT') form[k] = k === 'supplier' ? t.value : +t.value;
+  else return;
+  if (STRUCT_KEYS.includes(k)) renderForm();
+});
+$('oformBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (a && a.dataset.act === 'addband'){ form.bands.push({upto:'', price:''}); renderForm(); return; }
+  if (a && a.dataset.act === 'rmband'){ form.bands.splice(+a.dataset.b, 1); if (!form.bands.length) form.bands.push({upto:'', price:''}); renderForm(); return; }
+  const gs = e.target.closest('#grpSel');
+  if (gs) openGdd(gs);
+});
+$('oformSave').addEventListener('click', () => {
+  const o = formOpt();
+  if (!o.name.trim()){ $('nameErr').classList.add('on'); document.querySelector('[data-k=name]').classList.add('invalid'); toast('Enter option name', true); return; }
+  const e = elig(o);
+  if (o.sold && !e.ok){ toast('Untick "Can be sold separately" or fix: ' + e.reason, true); return; }
+  const rec = {id: form.id || Math.max(...OPTIONS.map(x => x.id)) + 1, name:o.name.trim(), code:(o.code || '').trim(), supplier:o.supplier,
+    hasPrice:o.hasPrice, pricingId:o.pricingId, cost:o.cost, price:o.price, rate:o.rate, bands:o.bands,
+    hasStock:o.hasStock, unitId:o.hasStock ? o.unitId : null, lpuMM:o.hasStock ? o.lpuMM : null, stockQty:o.hasStock ? o.stockQty : null,
+    sold:o.sold, groupId:G(o.groupId) ? o.groupId : 0, backorder:o.backorder, noMultiply:o.noMultiply};
+  const i = OPTIONS.findIndex(x => x.id === rec.id);
+  if (i < 0) OPTIONS.push(rec); else OPTIONS[i] = rec;
+  closeModal('oform');
+  renderOptionList();
+  toast(`Option "${rec.name}" saved${rec.sold ? ' · sellable in Job › Add product › ' + topGroup(rec.groupId) : ''}`);
+});
+
+/* ---- option group select (inside option form) ---- */
+const gdd = $('gdd'), gddList = $('gddList'), gddSearch = $('gddSearch');
+let gddAnchor = null, gddExp = new Set();
+function openGdd(anchor){
+  closeFloating();
+  gddAnchor = anchor; anchor.classList.add('open');
+  gddSearch.value = '';
+  gddExp = new Set(GROUPS.filter(g => kids(g.id).length).map(g => g.id));
+  renderGdd();
+  gdd.classList.add('open');
+  placePanel(gdd, anchor, 300);
+  gddSearch.focus();
+}
+function closeGdd(){ gdd.classList.remove('open'); if (gddAnchor) gddAnchor.classList.remove('open'); gddAnchor = null; }
+// "Options" (default) and all Level 1 groups sit at the same level; arrows expand/collapse sub-groups
+function renderGdd(){
+  const q = gddSearch.value.trim().toLowerCase(), out = [];
+  const row = (id, depth, arrow, extra) => {
+    const sel = form.groupId === id;
+    return `<div class="dd-item ${sel ? 'on' : ''}" data-gs="${id}" style="padding-left:${10 + depth*18}px">
+      ${arrow}<span class="nm">${extra}</span>${sel ? '<i class="bi bi-check2"></i>' : ''}</div>`;
+  };
+  if (q){
+    const hits = [0, ...GROUPS.filter(g => g.id !== 0).map(g => g.id)].filter(id => groupLabel(id).toLowerCase().includes(q));
+    hits.forEach(id => {
+      const p = gpath(id);
+      out.push(row(id, 0, '', id === 0 ? 'Options <span class="muted">(default)</span>'
+        : `${esc(G(id).name)}${p.length > 1 ? `<span class="pth">${esc(p.slice(0, -1).join(' › '))}</span>` : ''}`));
+    });
+  } else {
+    out.push(row(0, 0, '<i class="bi bi-dot" style="width:14px;color:#9aa1ad"></i>', 'Options <span class="muted">(default)</span>'));
+    (function walk(id, depth){
+      kids(id).forEach(c => {
+        const has = kids(c.id).length, ex = gddExp.has(c.id);
+        const arrow = has ? `<i class="bi bi-chevron-${ex ? 'down' : 'right'}" data-gt="${c.id}" style="width:14px;font-size:11px;color:#4b5262"></i>`
+                          : '<i style="width:14px"></i>';
+        out.push(row(c.id, depth, arrow, `${esc(c.name)} <span class="tag" style="margin-left:6px">L${level(c.id)}</span>`));
+        if (has && ex) walk(c.id, depth + 1);
+      });
+    })(0, 0);
+  }
+  gddList.innerHTML = out.join('') || '<div class="dd-none">No groups found</div>';
+}
+gddSearch.addEventListener('input', renderGdd);
+gddList.addEventListener('click', e => {
+  const t = e.target.closest('[data-gt]');
+  if (t){ const id = +t.dataset.gt; gddExp.has(id) ? gddExp.delete(id) : gddExp.add(id); renderGdd(); return; }
+  const it = e.target.closest('[data-gs]');
+  if (!it) return;
+  form.groupId = +it.dataset.gs;
+  closeGdd();
+  updateSold();
+});
+$('gddManage').addEventListener('click', () => { closeGdd(); openManage(); });
+
+/* =========================================================
+   MANAGE OPTION GROUPS (works on a draft; Save commits)
+   ========================================================= */
+let draft = null, mgSel = 0, mgExp = new Set(), kmFor = null;
+const DG = id => G(id, draft.groups);
+const dkids = pid => kids(pid, draft.groups);
+function openManage(){
+  draft = {groups: JSON.parse(JSON.stringify(GROUPS)), link: Object.fromEntries(OPTIONS.map(o => [o.id, o.groupId]))};
+  mgSel = form && form.sold ? form.groupId : 0;
+  if (!DG(mgSel)) mgSel = 0;
+  mgExp = new Set(draft.groups.map(g => g.id));
+  $('mgSearch').value = '';
+  renderManage();
+  $('manage').classList.add('open');
+}
+// "Options" is the default Level 1 group, listed first; new groups are its siblings, not its children
+function renderManage(){
+  const out = [`<div class="mg-node root ${mgSel === 0 ? 'sel' : ''}" data-g="0" style="padding-left:8px">
+      <i class="sp"></i><span class="nm">${esc(DG(0).name)}</span><span class="tag">Default</span>
+      <i class="bi bi-grip-vertical grip"></i></div>`];
+  (function walk(id, depth){
+    dkids(id).forEach(c => {
+      const ch = dkids(c.id), ex = mgExp.has(c.id);
+      out.push(`<div class="mg-node ${mgSel === c.id ? 'sel' : ''}" data-g="${c.id}" style="padding-left:${8 + depth*18}px">
+        ${ch.length ? `<i class="bi bi-chevron-${ex ? 'down' : 'right'} tg" data-tg></i>` : '<i class="sp"></i>'}
+        <span class="nm">${esc(c.name)}</span><span class="lv">L${level(c.id, draft.groups)}</span>
+        <button class="kb" data-km title="More"><i class="bi bi-three-dots-vertical"></i></button>
+        <i class="bi bi-grip-vertical grip"></i></div>`);
+      if (ch.length && ex) walk(c.id, depth + 1);
+    });
+  })(0, 0);
+  $('mgTree').innerHTML = out.join('');
+  const g = DG(mgSel), lv = level(mgSel, draft.groups);
+  $('mgTitle').textContent = g.name;
+  $('mgSub').textContent = mgSel === 0 ? 'Default group · cannot be renamed or deleted' : `Level ${lv} of 3 · ${gpath(mgSel, draft.groups).join(' › ')}`;
+  const q = $('mgSearch').value.trim().toLowerCase();
+  const list = OPTIONS.filter(o => o.sold && draft.link[o.id] === mgSel && (!q || o.name.toLowerCase().includes(q) || (o.code || '').toLowerCase().includes(q)));
+  $('mgRows').innerHTML = list.length ? list.map(o => `<tr>
+      <td>${esc(o.name)}</td><td>${esc(o.code || '-')}</td><td class="num">${availText(o)}</td>
+      <td class="num">${mgSel !== 0 ? `<button class="del" data-unlink="${o.id}" title="Unlink from group"><i class="bi bi-x-circle"></i></button>` : ''}</td></tr>`).join('')
+    : `<tr><td colspan="4" class="empty"><i class="bi bi-link-45deg"></i>No options linked to this group</td></tr>`;
+}
+$('mgSearch').addEventListener('input', renderManage);
+$('mgTree').addEventListener('click', e => {
+  const n = e.target.closest('.mg-node');
+  if (!n) return;
+  const id = +n.dataset.g;
+  if (e.target.closest('[data-tg]')){ mgExp.has(id) ? mgExp.delete(id) : mgExp.add(id); renderManage(); return; }
+  if (e.target.closest('[data-km]')){ openKMenu(id, e.target.closest('[data-km]')); return; }
+  mgSel = id; renderManage();
+});
+$('mgRows').addEventListener('click', e => {
+  const b = e.target.closest('[data-unlink]');
+  if (!b) return;
+  draft.link[+b.dataset.unlink] = 0;
+  renderManage();
+  toast('Option unlinked. It moves to the default "Options" group.');
+});
+$('mgAdd').addEventListener('click', () => openGroupEdit({parent:0}));
+$('mgLink').addEventListener('click', () => openGroupEdit({id:mgSel}));
+$('mgSave').addEventListener('click', () => {
+  GROUPS = draft.groups;
+  OPTIONS.forEach(o => { if (draft.link[o.id] != null) o.groupId = draft.link[o.id]; });
+  if (form){
+    if (form.id && draft.link[form.id] != null) form.groupId = draft.link[form.id];
+    if (!G(form.groupId)) form.groupId = 0;
+    if ($('oform').classList.contains('open')) updateSold();
+  }
+  closeModal('manage');
+  renderOptionList();
+  renderAddMenu();
+  toast('Option groups saved');
+});
+
+/* ---- three-dot menu ---- */
+function openKMenu(id, btn){
+  closeFloating();
+  kmFor = id;
+  const lv = level(id, draft.groups), sib = dkids(DG(id).parent), idx = sib.findIndex(g => g.id === id);
+  const items = lv >= 3
+    ? ['<div data-k="edit"><i class="bi bi-pencil"></i>Edit</div>', '<div data-k="del" class="danger"><i class="bi bi-trash3"></i>Delete</div>']
+    : ['<div data-k="add"><i class="bi bi-plus-lg"></i>Add sub-group</div>', '<div data-k="edit"><i class="bi bi-pencil"></i>Edit</div>',
+       idx > 0 ? '<div data-k="up"><i class="bi bi-arrow-up"></i>Move up</div>' : '',
+       idx < sib.length - 1 ? '<div data-k="down"><i class="bi bi-arrow-down"></i>Move down</div>' : '',
+       '<div data-k="del" class="danger"><i class="bi bi-trash3"></i>Delete</div>'];
+  const km = $('kmenu');
+  km.innerHTML = items.join('');
+  const r = btn.getBoundingClientRect();
+  km.style.left = (r.right - 160) + 'px';
+  km.style.top = (r.bottom + 4) + 'px';
+  km.classList.add('open');
+}
+$('kmenu').addEventListener('click', e => {
+  const it = e.target.closest('[data-k]');
+  if (!it) return;
+  const id = kmFor, k = it.dataset.k;
+  $('kmenu').classList.remove('open');
+  if (k === 'add') openGroupEdit({parent:id});
+  else if (k === 'edit') openGroupEdit({id});
+  else if (k === 'up' || k === 'down'){
+    const sib = dkids(DG(id).parent), i = sib.findIndex(g => g.id === id), j = k === 'up' ? i - 1 : i + 1;
+    [sib[i], sib[j]] = [sib[j], sib[i]];
+    sib.forEach((g, n) => g.order = n + 1);
+    renderManage();
+  }
+  else if (k === 'del') deleteGroup(id);
+});
+function deleteGroup(id){
+  const g = DG(id);
+  if (dkids(id).length){ toast(`"${g.name}" has sub-groups. Delete or move them first.`, true); return; }
+  const linked = OPTIONS.filter(o => draft.link[o.id] === id);
+  const others = draft.groups.filter(x => x.id !== id);
+  const html = `<p>Delete group <b>${esc(g.name)}</b>?</p>` + (linked.length
+    ? `<div class="cfield"><label>${linked.length} linked option${linked.length > 1 ? 's' : ''} will move to</label>
+       <select class="vsel" id="moveTo">${others.map(x => `<option value="${x.id}" ${x.id === g.parent ? 'selected' : ''}>${esc(x.id === 0 ? 'Options (default)' : gpath(x.id, draft.groups).join(' › '))}</option>`).join('')}</select></div>` : '');
+  confirmBox({title:'Delete group', html, onOk: body => {
+    const to = linked.length ? +body.querySelector('#moveTo').value : 0;
+    linked.forEach(o => draft.link[o.id] = to);
+    draft.groups = draft.groups.filter(x => x.id !== id);
+    if (mgSel === id) mgSel = g.parent;
+    renderManage();
+    toast('Group deleted');
+  }});
+}
+
+/* ---- add / edit group dialog ---- */
+let ge = null;
+function openGroupEdit({id = null, parent = 0}){
+  const g = id != null ? DG(id) : null;
+  ge = {id, parent: g ? g.parent : parent, root: id === 0,
+        links: new Set(OPTIONS.filter(o => o.sold && id != null && draft.link[o.id] === id).map(o => o.id))};
+  $('geTitle').textContent = id == null ? 'Add option group' : id === 0 ? 'Link options' : 'Edit option group';
+  $('geName').value = g ? g.name : '';
+  $('geName').disabled = ge.root;
+  $('geName').classList.remove('invalid');
+  $('geErr').classList.remove('on');
+  $('geParent').value = ge.parent === null || ge.parent === 0 ? 'None (Level 1 group)' : gpath(ge.parent, draft.groups).join(' › ');
+  $('gePanel').classList.remove('open');
+  renderGeSel();
+  $('gedit').classList.add('open');
+  if (!ge.root) $('geName').focus();
+}
+function renderGeSel(){
+  const names = OPTIONS.filter(o => ge.links.has(o.id)).map(o => o.name);
+  $('geSel').classList.toggle('ph', !names.length);
+  $('geSel').querySelector('span').textContent = names.length ? names.join(', ') : 'Select options';
+  const q = $('geSearch').value.trim().toLowerCase();
+  const list = OPTIONS.filter(o => o.sold && elig(o).ok && (!q || o.name.toLowerCase().includes(q)));
+  $('geList').innerHTML = list.length ? list.map(o => {
+    const cur = draft.link[o.id];
+    const note = cur !== ge.id && cur != null ? `<small>in ${esc(groupLabel(cur, draft.groups) || 'Options')}</small>` : '';
+    return `<label><input type="checkbox" class="cb" value="${o.id}" ${ge.links.has(o.id) ? 'checked' : ''}>${esc(o.name)}${note}</label>`;
+  }).join('') : '<div class="dd-none">No sellable options. Tick "Can be sold separately" on an option first.</div>';
+}
+$('geSel').addEventListener('click', () => { $('gePanel').classList.toggle('open'); $('geSearch').value = ''; renderGeSel(); $('geSearch').focus(); });
+$('geSearch').addEventListener('input', renderGeSel);
+$('geList').addEventListener('change', e => {
+  const id = +e.target.value;
+  e.target.checked ? ge.links.add(id) : ge.links.delete(id);
+  const names = OPTIONS.filter(o => ge.links.has(o.id)).map(o => o.name);
+  $('geSel').classList.toggle('ph', !names.length);
+  $('geSel').querySelector('span').textContent = names.length ? names.join(', ') : 'Select options';
+});
+$('geSave').addEventListener('click', () => {
+  const name = $('geName').value.trim();
+  const fail = msg => { $('geErr').textContent = msg; $('geErr').classList.add('on'); $('geName').classList.add('invalid'); };
+  if (!ge.root){
+    if (!name) return fail('Enter group name');
+    // Level 1 names must also not clash with the default "Options" group
+    const siblings = ge.parent === 0 ? [DG(0), ...dkids(0)] : dkids(ge.parent);
+    if (siblings.some(g => g.id !== ge.id && g.name.toLowerCase() === name.toLowerCase()))
+      return fail(`"${name}" already exists ${ge.parent === 0 ? 'at Level 1' : 'under ' + DG(ge.parent).name}`);
+  }
+  let gid = ge.id;
+  if (gid == null){
+    gid = Math.max(...draft.groups.map(g => g.id)) + 1;
+    draft.groups.push({id:gid, name, parent:ge.parent, order:dkids(ge.parent).length + 1});
+    mgExp.add(ge.parent); mgExp.add(gid);
+  } else if (!ge.root) DG(gid).name = name;
+  OPTIONS.filter(o => o.sold).forEach(o => {
+    if (ge.links.has(o.id)) draft.link[o.id] = gid;
+    else if (draft.link[o.id] === gid) draft.link[o.id] = 0;
+  });
+  mgSel = gid;
+  closeModal('gedit');
+  renderManage();
+});
+
+/* =========================================================
+   SHARED: modals, confirm, floating panels, toast, keys
+   ========================================================= */
+function closeModal(id){ if (id === 'popup') closeDD(); $(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+
+let confirmCb = null;
+function confirmBox({title = 'Delete', html, ok = 'Delete', onOk}){
+  $('cTitle').textContent = title;
+  $('cBody').innerHTML = html;
+  $('confirmOk').textContent = ok;
+  confirmCb = onOk;
+  $('confirm').classList.add('open');
+}
+function closeConfirm(){ $('confirm').classList.remove('open'); confirmCb = null; }
+$('confirmOk').addEventListener('click', () => { const cb = confirmCb, body = $('cBody'); if (cb) cb(body); closeConfirm(); });
+document.querySelectorAll('[data-cclose]').forEach(b => b.addEventListener('click', closeConfirm));
+
+function closeFloating(){ closeDD(); closeGdd(); $('kmenu').classList.remove('open'); }
+document.addEventListener('mousedown', e => {
+  if (dd.classList.contains('open') && !dd.contains(e.target) && !(ddAnchor && ddAnchor.contains(e.target))) closeDD();
+  if (gdd.classList.contains('open') && !gdd.contains(e.target) && !(gddAnchor && gddAnchor.contains(e.target))) closeGdd();
+  if ($('kmenu').classList.contains('open') && !e.target.closest('#kmenu') && !e.target.closest('[data-km]')) $('kmenu').classList.remove('open');
+  if ($('addMenu').classList.contains('open') && !e.target.closest('#addMenu') && !e.target.closest('#addBtn')) $('addMenu').classList.remove('open');
+  if ($('gePanel').classList.contains('open') && !e.target.closest('.msel')) $('gePanel').classList.remove('open');
+});
+window.addEventListener('resize', closeFloating);
+
+let tt;
+function toast(msg, isErr){
+  const t = $('toast');
+  t.querySelector('span').textContent = msg;
+  t.classList.toggle('err', !!isErr);
+  t.querySelector('i').className = isErr ? 'bi bi-exclamation-circle-fill' : 'bi bi-check-circle-fill';
+  t.classList.add('on');
+  clearTimeout(tt);
+  tt = setTimeout(() => t.classList.remove('on'), 3000);
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('kmenu').classList.contains('open')) $('kmenu').classList.remove('open');
+  else if (gdd.classList.contains('open')) closeGdd();
+  else if (dd.classList.contains('open')) closeDD();
+  else if ($('gePanel').classList.contains('open')) $('gePanel').classList.remove('open');
+  else if ($('confirm').classList.contains('open')) closeConfirm();
+  else if ($('gedit').classList.contains('open')) closeModal('gedit');
+  else if ($('manage').classList.contains('open')) closeModal('manage');
+  else if ($('oform').classList.contains('open')) closeModal('oform');
+  else if ($('popup').classList.contains('open')) closeModal('popup');
+  else if ($('ppop').classList.contains('open')) closeModal('ppop');
+});
+
+/* =========================================================
+   SEED: job ON2314 built in the same order a user would add it
+   1) option 1 inch screw  2) product NS_BWF  3) options PVC tube + Wood glue
+   4) product Ad New  5) option Blind cord
+   ========================================================= */
+(function seed(){
+  const addOptions = rows => commit(rows, calcAll(rows), false);
+  const addProduct = p => jobLines.push({type:'product', lineId:++lineSeq, ...p});
+  addOptions([{...newRow(), optionId:11, qty:'3'}]);
+  addProduct({name:'NS_BWF', recipe:'Standard', desc:'Markilux, Screws,Brackets,Endcaps,Bottom Bar, Left',
+    fields:{'Unit Type':'mm', 'Quantity':'5', 'Supplier':'Markilux', 'Width':'1200 mm', 'Drop':'1500 mm', 'Extras':'Screws,Brackets,Endcaps,Bottom Bar', 'Control Side':'Left', 'Product Type':'Select'},
+    cost:437.50, qty:5, net:460, taxOn:true, rate:20, vatAmt:92, gross:552});
+  addOptions([
+    {...newRow(), optionId:40, length:'2500', qty:'2', discount:'10'},
+    {...newRow(), optionId:1,  qty:'2', taxOn:false}
+  ]);
+  addProduct({name:'Ad New', recipe:'Test', desc:'Test, Markilux, 50, 50, Blind',
+    fields:{'Location':'Test', 'Unit Type':'Inches', 'Supplier':'Markilux', 'Quantity':'1', 'Width':'50', 'Drop':'50', 'Product Type':'Select', 'pgr2':'Select'},
+    cost:50, qty:1, net:50, taxOn:true, rate:20, vatAmt:10, gross:60});
+  addOptions([{...newRow(), optionId:31, length:'1800', qty:'4', rate:5}]);
+  renderAddMenu();
+  renderGrid();
+  renderOptionList();
+})();
+</script>
+</body>
+</html>
