@@ -106,7 +106,13 @@
   /* modals */
   .overlay{position:fixed;inset:0;background:rgba(18,20,32,.45);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:44px 16px}
   .overlay.open{display:flex}
+  #oform{z-index:55}
   #manage{z-index:60}
+  .optcell{display:flex;gap:6px;align-items:center}
+  .optcell .sel{flex:1;min-width:0}
+  .editopt{background:none;border:1px solid var(--input);border-radius:4px;width:34px;height:34px;color:#4b5262;flex:none}
+  .editopt:hover{color:var(--magenta);border-color:var(--magenta)}
+  .err a{color:var(--cyan);text-decoration:underline;cursor:pointer;margin-left:4px}
   #gedit{z-index:65}
   #confirm{z-index:80}
   .modal{background:#fff;border-radius:6px;width:min(1240px,100%);box-shadow:0 20px 50px rgba(0,0,0,.25);display:flex;flex-direction:column;max-height:calc(100vh - 88px)}
@@ -240,10 +246,26 @@
   .sold-box>i{color:var(--cyan);font-size:18px}
   .sold-box.bad{border-color:#f6d3b3;background:#fff8f1}
   .sold-box.bad>i{color:var(--orange)}
-  .bands{grid-column:2/-1;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-  .bands th{background:#f4f6f8;text-align:left;padding:8px 10px;font-weight:600;font-size:12px;color:#4b5262}
-  .bands td{padding:6px 10px;border-top:1px solid var(--line)}
-  .bands .lnk{color:var(--cyan);background:none;border:0;padding:8px 10px;font-weight:500}
+  /* stock section (same layout as live "Option has stock") */
+  .acct{grid-column:1/-1;border:1px solid var(--line);border-radius:4px;padding:10px}
+  .acct table{width:100%;border-collapse:collapse}
+  .acct th{background:#f4f6f8;text-align:left;padding:8px 10px;font-weight:600;font-size:12px;color:#4b5262}
+  .acct td{padding:6px 10px;border-top:1px solid var(--line)}
+  .acct td:nth-child(2),.acct td:nth-child(3){width:34%}
+  .vsel option{color:var(--text)}
+  .vsel option.nosale{color:var(--red)}
+  .star{color:var(--red);font-weight:700}
+  .pair{display:flex;gap:8px;align-items:center}
+  .pair>*{flex:1;min-width:0}
+  .pair .tip{flex:none}
+  .stk{margin:14px 14px 0;background:#eef0f3;border-radius:4px;padding:10px}
+  .stk-top{display:flex;justify-content:flex-end;margin-bottom:10px}
+  .stk table{width:100%;border-collapse:collapse;background:#fff}
+  .stk th{background:var(--cyan);color:#fff;text-align:left;padding:8px 10px;font-weight:600;font-size:12px}
+  .stk td{padding:6px 10px;border-top:1px solid var(--line)}
+  .stk .none{text-align:center;color:var(--muted);padding:14px}
+  .stk-foot{font-size:11px;color:var(--muted);margin-top:8px}
+  .stk-foot b{color:var(--text)}
 
   /* manage groups */
   .mg{display:grid;grid-template-columns:290px minmax(0,1fr);gap:14px;height:440px;width:100%}
@@ -429,7 +451,7 @@
   </div>
   <div>
     <div class="list-head">
-      <span class="list-note"><i class="bi bi-info-circle"></i>Click an option to edit. "Can be sold separately" follows the pricing type and stock rules.</span>
+      <span class="list-note"><i class="bi bi-info-circle"></i>Click an option to edit. Any pricing type and any stock unit type (Each, Set, Length) can be sold separately.</span>
       <button class="btn btn-out">Default view <i class="bi bi-caret-down-fill" style="font-size:10px"></i></button>
       <button class="btn btn-mag" id="addOptBtn"><i class="bi bi-plus-lg"></i>Add option</button>
     </div>
@@ -455,7 +477,6 @@
     </div>
     <div class="m-meta">
       <span><i class="bi bi-person"></i>Account: <b>Joe's company</b> (Trade)</span>
-      <span><i class="bi bi-rulers"></i>Length unit: <b id="metaUnit">mm</b> (from job)</span>
       <span><i class="bi bi-receipt"></i>Default tax: <b>On · 20.000%</b> (switch off per line)</span>
       <span id="metaMode"></span>
     </div>
@@ -463,11 +484,11 @@
       <div class="twrap" id="twrap">
         <table class="ot">
           <colgroup>
-            <col style="width:58px"><col style="width:24%"><col style="width:13%"><col style="width:8%"><col style="width:11%">
-            <col style="width:13%"><col style="width:16%"><col style="width:9%"><col style="width:42px">
+            <col style="width:58px"><col style="width:31%"><col style="width:9%"><col style="width:12%">
+            <col style="width:14%"><col style="width:17%"><col style="width:10%"><col style="width:42px">
           </colgroup>
           <thead><tr>
-            <th>Seq</th><th>Option</th><th>Length</th><th>Qty</th><th>Discount</th><th>Price</th>
+            <th>Seq</th><th>Option</th><th>Qty</th><th>Discount</th><th>Price</th>
             <th>Tax</th>
             <th class="r">Gross</th><th></th>
           </tr></thead>
@@ -475,7 +496,6 @@
           <tfoot><tr>
             <td></td>
             <td style="font-weight:600;padding-bottom:20px">Total</td>
-            <td></td>
             <td><span class="tot-lbl">Qty</span><div class="tot-box" id="tQty">0</div></td>
             <td></td>
             <td><span class="tot-lbl">Net</span><div class="tot-box r" id="tNet">£0.00</div></td>
@@ -649,27 +669,59 @@ const PRICING = [
   {id:12, name:'Perimeter'},
   {id:14, name:'Square foot'},
   {id:15, name:'Square yard'},
+  {id:16, name:'Set'},   // live: unit cost × 2 (no width/drop needed), treated like Fixed
   {id:17, name:'Multiply by price table cost price'},
   {id:18, name:'Price based on quantity'},
   {id:19, name:'Price per foot (Width)'},
   {id:20, name:'Price per foot (Drop)'}
 ];
-// Pricing types that work without a product (no width/drop/price table needed)
-const SALE = {1:'fixed', 3:'band', 4:'band', 6:'per_m', 7:'per_m', 8:'per_in', 9:'per_in', 19:'per_ft', 20:'per_ft'};
 const pricingName = id => (PRICING.find(p => p.id === id) || {}).name || '-';
+// Pricing types that need the product's width/drop, area or price table → do not work for "Can be sold separately"
+const NO_SALE = [2, 5, 10, 11, 12, 14, 15, 17, 18];
+const canSellPricing = id => !NO_SALE.includes(+id);
 
 // Unit type ids as stored in bm_common_dropdown_list (unit_type)
+// Length units follow the live "Length per unit" dropdown order (cm, mm, m, Inches, yard, feet)
 const UNIT_TYPES = [
   {id:5, name:'Each', kind:'qty'},
   {id:6, name:'Set',  kind:'qty'},
-  {id:2, name:'Length (mm)',   kind:'len', f:1,     ab:'mm'},
-  {id:1, name:'Length (cm)',   kind:'len', f:10,    ab:'cm'},
-  {id:3, name:'Length (m)',    kind:'len', f:1000,  ab:'m'},
-  {id:4, name:'Length (inch)', kind:'len', f:25.4,  ab:'in'},
-  {id:9, name:'Length (feet)', kind:'len', f:304.8, ab:'ft'},
-  {id:8, name:'Length (yard)', kind:'len', f:914.4, ab:'yd'}
+  {id:1, name:'Length (cm)',   kind:'len', f:10,    ab:'cm', lbl:'cm'},
+  {id:2, name:'Length (mm)',   kind:'len', f:1,     ab:'mm', lbl:'mm'},
+  {id:3, name:'Length (m)',    kind:'len', f:1000,  ab:'m',  lbl:'m'},
+  {id:4, name:'Length (inch)', kind:'len', f:25.4,  ab:'in', lbl:'Inches'},
+  {id:8, name:'Length (yard)', kind:'len', f:914.4, ab:'yd', lbl:'yard'},
+  {id:9, name:'Length (feet)', kind:'len', f:304.8, ab:'ft', lbl:'feet'}
 ];
 const unitOf = o => UNIT_TYPES.find(u => u.id === o.unitId);
+const LOCATIONS = ['Warehouse', 'Showroom', 'Van 1'];
+
+/* ---- Selling Price Comes From (same as live list_selling_price_comes_from) ----
+   1 Cost * Markup     → selling = cost price × markup        (markup empty/0 → 1)
+   2 Cost + Percentage → selling = cost price + cost price × markup %
+   3 Separate          → selling price typed per account type (Minimum selling price is disabled)
+   Cost price = (Unit cost + Landed cost) − Supplier discount %                                   */
+const SP_FROM = [{id:1, name:'Cost * Markup'}, {id:2, name:'Cost + Percentage'}, {id:3, name:'Separate'}];
+// live hides "Separate" for these pricing types and resets to Cost * Markup
+const NO_SEPARATE = [12, 18];
+const ACCOUNT_TYPES = [{id:1, name:'Trade'}, {id:2, name:'Retail'}];
+const JOB_ACCT = 1;   // the job's customer (Joe's company) is a Trade account
+const rnd2 = n => Math.round(n * 100) / 100;
+function costPrice(o){
+  const base = (+o.cost || 0) + (+o.landed || 0);
+  return rnd2(base - base * (+o.suppDisc || 0) / 100);
+}
+// selling price per unit (each / set / piece) for an account type
+function sellPrice(o, acctId = JOB_ACCT){
+  const a = (o.acct || {})[acctId] || {}, cp = costPrice(o);
+  let p;
+  if (o.spFrom === 3) p = a.price;
+  else {
+    const m = +a.markup || 0;
+    p = o.spFrom === 2 ? cp + cp * m / 100 : cp * (m || 1);
+    if (o.minSell > 0 && p < o.minSell) p = +o.minSell;
+  }
+  return p == null || p === '' || isNaN(p) ? null : rnd2(+p);
+}
 const SUPPLIERS = ['Decora', 'Markilux', 'Abba blinds', 'Arena'];
 const RATES = [20, 5, 0];
 
@@ -684,30 +736,41 @@ let GROUPS = [
   {id:6, name:'Tubes',       parent:0, order:4}
 ];
 
-const mk = o => ({supplier:'Decora', hasPrice:true, pricingId:1, cost:0, price:null, rate:null, bands:null,
-  hasStock:false, unitId:null, lpuMM:null, stockQty:null, sold:false, groupId:0, backorder:false, noMultiply:false, ...o});
+// stockQty = available units (sum of the Add Stock rows). Length: units are lengths of "Length per unit".
+function mk(o){
+  const r = {supplier:'Decora', hasPrice:true, pricingId:1, cost:0, landed:0, suppDisc:0, spFrom:3, minSell:null, acct:null,
+    hasStock:false, unitId:null, lpuMM:null, stockQty:null, cartonQty:null, minCartons:null, maxCartons:null, reorder:null,
+    consumption:true, stockRows:[], sold:false, groupId:0, backorder:false, noMultiply:false, ...o};
+  if (r.hasStock && !r.stockRows.length && r.stockQty) r.stockRows = [{label:'Opening stock', location:'Warehouse', qty:r.stockQty, priority:1}];
+  // sample data: `price` = Trade selling price (Separate); Retail = Trade + 20 %
+  if (!r.acct) r.acct = {1:{markup:null, price:r.price ?? null}, 2:{markup:null, price:r.price != null ? rnd2(r.price * 1.2) : null}};
+  delete r.price;
+  return r;
+}
 let OPTIONS = [
   mk({id:1,  name:'Wood glue (500ml)',      code:'WG-500', cost:4,   price:7.50, sold:true}),
   mk({id:2,  name:'Bracket set (L-shaped)', code:'BR-L2',  cost:9,   price:15,   hasStock:true, unitId:6, stockQty:6,   sold:true}),
   mk({id:3,  name:'Duct tape (50mm x 20m)', code:'DT-50',  supplier:'Arena', cost:2.1, price:4.20, hasStock:true, unitId:5, stockQty:40, sold:true}),
-  mk({id:10, name:'Wood screw',             code:'WS-01',  cost:0.1, price:0.35, hasStock:true, unitId:5, stockQty:500, sold:true, groupId:1}),
+  mk({id:10, name:'Wood screw',             code:'WS-01',  cost:0.1, spFrom:1, acct:{1:{markup:3.5}, 2:{markup:4}}, hasStock:true, unitId:5, stockQty:500, sold:true, groupId:1}),
   mk({id:11, name:'1 inch screw',           code:'T35-06', cost:0.9, price:2.00, hasStock:true, unitId:5, stockQty:100, sold:true, groupId:2}),
   mk({id:12, name:'2 inch screw',           code:'T35-07', cost:1.1, price:2.40, hasStock:true, unitId:5, stockQty:60,  sold:true, groupId:2}),
   mk({id:13, name:'Stainless 1 inch screw', code:'SS-1',   cost:1.4, price:3.10, sold:true, groupId:7}),
   mk({id:14, name:'Metal 50 mm screw',      code:'MS-50',  cost:0.8, price:1.80, sold:true, groupId:3}),
   mk({id:20, name:'250 V motor',            code:'2123',   supplier:'Markilux', cost:70, price:120, hasStock:true, unitId:5, stockQty:3, sold:true, groupId:4}),
-  mk({id:21, name:'Kemo motor',             code:'6432',   supplier:'Markilux', cost:55, price:95,  hasStock:true, unitId:5, stockQty:8, sold:true, groupId:4}),
-  mk({id:30, name:'Metal ball chain',       code:'CH-MB',  pricingId:19, cost:0.6, rate:1.50, sold:true, groupId:5}),
-  mk({id:31, name:'Blind cord (3mm)',       code:'CD-3',   pricingId:3, cost:3, bands:[{upto:1000,price:8},{upto:2000,price:14},{upto:3000,price:20}], sold:true, groupId:5}),
-  mk({id:40, name:'PVC tube (35mm)',        code:'2354',   pricingId:6, cost:4, rate:10, hasStock:true, unitId:2, lpuMM:6000, stockQty:5, sold:true, groupId:6}),
+  mk({id:21, name:'Kemo motor',             code:'6432',   supplier:'Markilux', cost:50, landed:5, spFrom:2, acct:{1:{markup:70}, 2:{markup:90}}, hasStock:true, unitId:5, stockQty:8, sold:true, groupId:4}),
+  mk({id:30, name:'Metal ball chain',       code:'CH-MB',  pricingId:19, cost:6, price:15, hasStock:true, unitId:9, lpuMM:3048, stockQty:25, cartonQty:10, sold:true, groupId:5}),
+  mk({id:31, name:'Blind cord (3mm)',       code:'CD-3',   pricingId:3, cost:3, price:14, hasStock:true, unitId:2, lpuMM:1800, stockQty:40, sold:true, groupId:5}),
+  mk({id:40, name:'PVC tube (35mm)',        code:'2354',   pricingId:6, cost:24, price:60, hasStock:true, unitId:3, lpuMM:6000, stockQty:5, cartonQty:5, sold:true, groupId:6}),
   mk({id:41, name:'Aluminium bar (6 m)',    code:'AB-6',   cost:12, price:24, hasStock:true, unitId:3, lpuMM:6000, stockQty:4, sold:true, groupId:6}),
-  mk({id:42, name:'Copper tube (15mm)',     code:'CT-15',  pricingId:8, cost:0.05, rate:0.12, sold:true, groupId:6}),
-  // Not sold separately (examples for the rules)
-  mk({id:50, name:'Bottom bar (white)',     code:'BB-W',   pricingId:3, cost:5, bands:[{upto:1500,price:12},{upto:3000,price:18}]}),
+  mk({id:42, name:'Copper tube (15mm)',     code:'CT-15',  pricingId:8, cost:6, price:14.20, unitId:3, lpuMM:3000, sold:true, groupId:6}),
+  // Example from the PRD discussion: Width prices + Length stock, 5 m per unit → Qty 2 = 10 m
+  mk({id:50, name:'Bottom bar (white)',     code:'BB-W',   pricingId:3, cost:5, price:30, hasStock:true, unitId:3, lpuMM:5000, stockQty:10, sold:true, groupId:6}),
+  // Each stock with a non-Fixed pricing type: sellable too
+  mk({id:54, name:'Chain connector',        code:'CC-1',   pricingId:6, cost:0.4, price:1.2, hasStock:true, unitId:5, stockQty:200, sold:true, groupId:5}),
+  // Not sold separately
   mk({id:51, name:'Blackout lining',        code:'BL-01',  pricingId:11, cost:6}),
   mk({id:52, name:'Endcap set',             code:'EC-2',   cost:1, price:2.5, hasStock:true, unitId:6, stockQty:30}),
-  mk({id:53, name:'Valance fixing',         code:'VF-50',  pricingId:2, cost:0}),
-  mk({id:54, name:'Chain connector',        code:'CC-1',   pricingId:6, cost:0.4, rate:1.2, hasStock:true, unitId:5, stockQty:200})
+  mk({id:53, name:'Valance fixing',         code:'VF-50',  pricingId:2, cost:0})
 ];
 const opt = id => OPTIONS.find(o => o.id === id);
 
@@ -736,48 +799,35 @@ const groupLabel = (id, list = GROUPS) => id === 0 ? 'Options' : gpath(id, list)
 function topGroup(id){ let g = G(id); if (!g || g.id === 0) return 'Options'; while (g.parent !== 0) g = G(g.parent); return g.name; }
 
 /* =========================================================
-   SELL-SEPARATELY RULES  (pricing type decides; unit type only checked when stock is On)
+   SELL-SEPARATELY RULES
    ========================================================= */
+// Any pricing type and any stock unit type can be sold separately. When sold on its own the option
+// uses the selling price of the job's account type per unit (from "Selling Price Comes From").
+// Two modes in the job: 'qty' (Each/Set, or stock off) and 'piece' (Length stock sold in fixed pieces
+// of "Length per unit"; no custom length). Qty = pieces, total length = Qty × Length per unit.
+// length in the option's own length unit when it has one, else the job unit
+function optLen(o, mm){ const u = unitOf(o); return u && u.kind === 'len' ? lenInUnit(mm, u) : fmtLen(mm); }
 function elig(o){
-  if (!o.hasPrice) return {ok:false, reason:'Turn on "Option has price" first.'};
-  const s = SALE[o.pricingId];
-  if (!s) return {ok:false, reason:`"${pricingName(o.pricingId)}" needs a product's width/drop or price table. Use Fixed, Price per meter/inch/foot or Width/Drop prices.`};
-  if (s === 'band' && !(o.bands && o.bands.length)) return {ok:false, reason:'Add at least one width/drop price band.'};
-  if (!o.hasStock) return {ok:true, mode: s === 'fixed' ? 'qty' : 'length'};
+  const no = reason => ({ok:false, reason});
+  if (!o.hasPrice) return no('"Option has price" is off. Turn it on and enter a selling price.');
+  if (!canSellPricing(o.pricingId)) return no(`Pricing type "${pricingName(o.pricingId)}" does not work for selling separately (needs the product's width/drop or price table).`);
+  if (o.spFrom === 3){
+    const miss = ACCOUNT_TYPES.filter(a => sellPrice(o, a.id) == null).map(a => a.name);
+    if (miss.length) return no(`Selling price is not entered for ${miss.join(', ')} (Selling Price Comes From: Separate).`);
+  } else if (!(costPrice(o) > 0) && !(o.minSell > 0)) return no('Cost price is 0. Enter Unit cost so the selling price can be worked out from the markup.');
+  if (!o.hasStock) return {ok:true, mode:'qty'};
   const u = unitOf(o);
-  if (!u) return {ok:false, reason:'Select a unit type in the stock section.'};
-  if (u.kind === 'qty'){
-    if (s !== 'fixed') return {ok:false, reason:`Unit type "${u.name}" works only with Fixed pricing. Change pricing to Fixed or unit type to Length.`};
-    return {ok:true, mode:'qty'};
-  }
-  if (!(o.lpuMM > 0)) return {ok:false, reason:'Enter "Length per unit" for Length stock.'};
-  return {ok:true, mode: s === 'fixed' ? 'fullpiece' : 'length'};
+  if (!u) return no(o.unitKind === 'len' ? 'Select the unit (cm, mm, m…) for "Length per unit" in the Stock section.' : 'Unit type is not selected in the Stock section.');
+  if (u.kind === 'qty') return {ok:true, mode:'qty'};
+  if (!(o.lpuMM > 0)) return no('Enter "Length per unit" in the Stock section.');
+  return {ok:true, mode:'piece'};
 }
 const mode = o => elig(o).mode || 'qty';
 const sellable = () => OPTIONS.filter(o => o.sold && elig(o).ok);
-const availOf = o => mode(o) === 'qty' ? o.stockQty : o.stockQty * o.lpuMM;
 
 function modeTag(o){
-  const m = mode(o), s = SALE[o.pricingId];
-  if (m === 'fullpiece') return '<span class="tag bar">Full bar</span>';
-  if (m === 'length') return `<span class="tag len">${{per_m:'Per metre', per_ft:'Per foot', per_in:'Per inch', band:o.pricingId === 4 ? 'Drop price' : 'Width price'}[s]}</span>`;
+  if (mode(o) === 'piece') return `<span class="tag len">${optLen(o, o.lpuMM)} piece</span>`;
   return `<span class="tag">${o.hasStock ? unitOf(o).name : 'Each'}</span>`;
-}
-function rateText(o){
-  switch (SALE[o.pricingId]){
-    case 'per_m':  return `${money(o.rate)} / m`;
-    case 'per_ft': return `${money(o.rate)} / ft`;
-    case 'per_in': return `${money(o.rate)} / in`;
-    case 'band':   return `Band price up to ${fmtLen(o.bands[o.bands.length-1].upto)}`;
-  }
-  if (mode(o) === 'fullpiece') return `${money(o.price)} / bar (${fmtLen(o.lpuMM)})`;
-  return `${money(o.price)} / ${o.hasStock ? unitOf(o).name.toLowerCase() : 'each'}`;
-}
-function stockText(o){
-  if (!o.hasStock) return '<span class="tag off">Stock off</span>';
-  const m = mode(o);
-  const v = m === 'qty' ? o.stockQty : m === 'fullpiece' ? `${o.stockQty} bars` : fmtLen(availOf(o));
-  return `<span><i class="bi bi-box-seam"></i> In stock: ${v}</span>`;
 }
 
 /* =========================================================
@@ -800,29 +850,27 @@ let jobLines = [], lineSeq = 0;
 // edit:true → opened from an option line: shows ALL option lines of the job (Seq order) + new row
 let pop = {rows:[], edit:false, all:false, groupId:0, focusLine:null, submitted:false};
 const seqOf = lineId => jobLines.findIndex(l => l.lineId === lineId) + 1;
-const newRow = () => ({optionId:null, length:'', qty:'', discount:'', price:'', manual:false, taxOn:true, rate:20, lineId:null, touched:{}});
+// Seq a popup row will have after save (same order as commit): existing lines keep their place
+// (minus lines removed in this popup), new rows continue after the last Seq used in the job
+function popSeq(i){
+  const row = pop.rows[i];
+  const keep = new Set(pop.rows.filter(r => r.lineId).map(r => r.lineId));
+  const base = pop.edit ? jobLines.filter(l => l.type !== 'option' || keep.has(l.lineId)) : jobLines;
+  if (row.lineId) return base.findIndex(l => l.lineId === row.lineId) + 1;
+  return base.length + pop.rows.slice(0, i + 1).filter(r => !r.lineId).length;
+}
+const newRow = () => ({optionId:null, qty:'', discount:'', price:'', manual:false, taxOn:true, rate:20, lineId:null, touched:{}});
 
 function calc(row){
   const r = {unitPrice:0, auto:0, base:0, net:0, vat:0, gross:0, err:{}};
   const o = opt(row.optionId);
   if (!o) return r;
-  const m = mode(o), s = SALE[o.pricingId], q = parseInt(row.qty, 10);
-  if (m === 'length'){
-    const L = parseFloat(row.length);
-    if (!(L > 0)) r.err.length = 'Enter length';
-    else {
-      const mm = toMM(L, jobUnit), mtr = mm/1000;
-      if (s === 'per_m') r.unitPrice = mtr * o.rate;
-      else if (s === 'per_ft') r.unitPrice = mtr / 0.3048 * o.rate;
-      else if (s === 'per_in') r.unitPrice = mtr / 0.0254 * o.rate;
-      else {
-        const b = o.bands.find(b => mm <= b.upto);
-        if (b) r.unitPrice = b.price;
-        else r.err.length = `No price available for this length (max ${fmtLen(o.bands[o.bands.length-1].upto)})`;
-      }
-      if (o.hasStock && o.lpuMM && mm > o.lpuMM + 0.001) r.err.length = `Length exceeds stock length (${fmtLen(o.lpuMM)})`;
-    }
-  } else r.unitPrice = o.price || 0;
+  const q = parseInt(row.qty, 10);
+  // option setup changed after it was placed (or set up wrong) → say why, block save
+  const e = elig(o);
+  if (!o.sold) r.err.option = '"Can be sold separately" is off in option setup.';
+  else if (!e.ok) r.err.option = e.reason;
+  else r.unitPrice = sellPrice(o) || 0;   // job account type; per unit: each / set / piece of "Length per unit"
 
   if (row.qty === '') r.err.qty = 'Enter qty';
   else if (!(q >= 1)) r.err.qty = 'Min qty is 1';
@@ -848,45 +896,37 @@ function calcAll(rows = pop.rows){
     const o = opt(l.optionId);
     if (!o || !o.hasStock) return;
     (usage[o.id] = usage[o.id] || {sum:0, rows:[]});
-    usage[o.id].sum += mode(o) === 'length' ? l.lengthMM * l.qty : l.qty;
+    usage[o.id].sum += l.qty;
   });
   rows.forEach((row, i) => {
     const o = opt(row.optionId);
     if (!o || !o.hasStock) return;
-    const q = parseInt(row.qty, 10) || 0;
-    let u = q;
-    if (mode(o) === 'length'){ const L = parseFloat(row.length); u = L > 0 ? toMM(L, jobUnit) * q : 0; }
     (usage[o.id] = usage[o.id] || {sum:0, rows:[]});
-    usage[o.id].sum += u; usage[o.id].rows.push(i);
+    usage[o.id].sum += parseInt(row.qty, 10) || 0; usage[o.id].rows.push(i);
   });
+  // Each/Set: qty ≤ available qty · Length piece: pieces ≤ units in stock
   for (const id in usage){
-    const o = opt(+id), m = mode(o);
-    const avail = m === 'length' ? availOf(o) : o.stockQty;
-    const txt = m === 'qty' ? `${o.stockQty}` : m === 'fullpiece' ? `${o.stockQty} bars` : fmtLen(availOf(o));
-    if (usage[id].sum > avail + 0.001) usage[id].rows.forEach(i => { if (!res[i].err.qty) res[i].err.qty = `Out of stock (available: ${txt})`; });
+    const o = opt(+id);
+    const txt = mode(o) === 'piece' ? `${o.stockQty} × ${optLen(o, o.lpuMM)}` : `${o.stockQty}`;
+    if (usage[id].sum > o.stockQty) usage[id].rows.forEach(i => { if (!res[i].err.qty) res[i].err.qty = `Out of stock (available: ${txt})`; });
   }
   return res;
 }
 
 const tb = $('rows');
 function rowHtml(row, i){
-  const o = opt(row.optionId), dis = !o, m = o ? mode(o) : null;
-  let lenCell;
-  if (m === 'length')
-    lenCell = `<div class="ig" data-w="length"><input data-f="length" inputmode="decimal" placeholder="Enter length" value="${esc(row.length)}"><span class="add">${UL[jobUnit]}</span></div><div class="err" data-e="length"></div>`;
-  else if (m === 'fullpiece')
-    lenCell = `<div class="ig lock"><input readonly value="${trim(fromMM(o.lpuMM, jobUnit))}"><span class="add"><i class="bi bi-lock-fill"></i>${UL[jobUnit]}</span></div><div class="hint">Sold as full bar</div>`;
-  else
-    lenCell = `<div class="ig dis"><input disabled placeholder="${o ? 'Not required' : '–'}"><span class="add">${UL[jobUnit]}</span></div>`;
-
-  const seq = row.lineId ? `<b>${seqOf(row.lineId)}</b>` : o ? '<span class="tag len" title="Seq is given on save (added at the end of the job)">New</span>' : '';
+  const o = opt(row.optionId), dis = !o;
+  const seq = `<b>${popSeq(i)}</b>`;
   return `<tr data-i="${i}" class="${row.lineId && row.lineId === pop.focusLine ? 'is-focus' : ''}">
     <td class="seqc">${seq}</td>
     <td>
-      <div class="sel ${o ? '' : 'ph'}" data-act="open" tabindex="0"><span>${o ? esc(o.name) : 'Select'}</span><i class="bi bi-caret-down-fill"></i></div>
-      ${o ? `<div class="info">${modeTag(o)}<span>${rateText(o)}</span>${stockText(o)}</div>` : ''}
+      <div class="optcell">
+        <div class="sel ${o ? '' : 'ph'}" data-act="open" tabindex="0" data-w="option"><span>${o ? esc(o.name) : 'Select'}</span><i class="bi bi-caret-down-fill"></i></div>
+        ${o ? '<button class="editopt" data-act="editopt" title="Open option setup"><i class="bi bi-pencil-square"></i></button>' : ''}
+      </div>
+      <div class="hint" data-e="len"></div>
+      <div class="err" data-e="option"></div>
     </td>
-    <td>${lenCell}</td>
     <td><input class="inp" data-f="qty" inputmode="numeric" placeholder="Enter value" value="${esc(row.qty)}" ${dis ? 'disabled' : ''}><div class="err" data-e="qty"></div></td>
     <td><div class="ig ${dis ? 'dis' : ''}" data-w="discount"><input data-f="discount" inputmode="decimal" placeholder="Enter discount" value="${esc(row.discount)}" ${dis ? 'disabled' : ''}><span class="add">%</span></div><div class="err" data-e="discount"></div></td>
     <td><div class="ig ${dis ? 'dis' : ''}"><span class="add pre">£</span><input class="r" data-f="price" inputmode="decimal" placeholder="0.00" value="${row.manual ? esc(row.price) : ''}" ${dis ? 'disabled' : ''}></div><div class="hint" data-e="net"></div></td>
@@ -913,17 +953,20 @@ function paint(){
     tq += parseInt(row.qty, 10) || 0; tn += r.net; tv += r.vat; tg += r.gross;
     const p = tr.querySelector('[data-f=price]');
     if (!row.manual && document.activeElement !== p) p.value = r.auto ? r.auto.toFixed(2) : '';
-    ['length','qty','discount'].forEach(k => {
+    ['option','qty','discount'].forEach(k => {
       const e = tr.querySelector(`[data-e=${k}]`);
       if (!e) return;
       let msg = r.err[k] || '';
       if (msg.startsWith('Enter') && !row.touched[k] && !pop.submitted) msg = '';
-      e.textContent = msg;
+      e.innerHTML = msg && k === 'option' ? `<i class="bi bi-exclamation-triangle"></i> Cannot price: ${esc(msg)} <a data-act="editopt">Fix in option setup</a>` : esc(msg);
       e.classList.toggle('on', !!msg);
       const w = k === 'qty' ? tr.querySelector('[data-f=qty]') : tr.querySelector(`[data-w=${k}]`);
       if (w) w.classList.toggle('invalid', !!msg);
     });
     const d = parseFloat(row.discount) || 0, q = parseInt(row.qty, 10) || 0;
+    // Length options: show length per unit + total (Qty × length per unit)
+    tr.querySelector('[data-e=len]').innerHTML = !r.err.option && mode(o) === 'piece'
+      ? `<i class="bi bi-rulers"></i> Length per unit: <b>${optLen(o, o.lpuMM)}</b>${q >= 1 ? ` · Total: <b>${optLen(o, o.lpuMM * q)}</b>` : ''}` : '';
     let h = '';
     if (row.manual) h += `<span class="manual"><i class="bi bi-pencil-square"></i> Manual price<a data-act="reset">Reset</a></span>`;
     else if (r.unitPrice && q >= 1) h += `<div>${money(r.unitPrice)} × ${q}</div>`;
@@ -973,6 +1016,7 @@ tb.addEventListener('click', e => {
     toast('Option removed. Totals recalculated.');
   }});
   else if (a.dataset.act === 'reset'){ pop.rows[i].manual = false; pop.rows[i].price = ''; paint(); }
+  else if (a.dataset.act === 'editopt') openForm(pop.rows[i].optionId);   // option setup opens over the popup
 });
 tb.addEventListener('keydown', e => {
   const s = e.target.closest('.sel');
@@ -1003,9 +1047,8 @@ function openDD(i, anchor){
 function closeDD(){ dd.classList.remove('open'); if (ddAnchor) ddAnchor.classList.remove('open'); ddRow = null; ddAnchor = null; }
 // "Options" is the default group (a sibling of Screws, Motors...), so it lists only options linked to it
 const scopeOptions = () => sellable().filter(o => pop.all || (pop.groupId === 0 ? o.groupId === 0 : isUnder(o.groupId, pop.groupId)));
-// Each/Set/Full bar can be added once per job (edit the existing line's qty instead); Length options can repeat
+// An option can be in the job once (lengths are fixed per unit, so change the existing line's qty instead)
 function usedElsewhere(o){
-  if (mode(o) === 'length') return false;
   const inPopup = new Set(pop.rows.map(r => r.lineId).filter(Boolean));
   return pop.rows.some((r, j) => j !== ddRow && r.optionId === o.id)
       || jobLines.some(l => l.type === 'option' && l.optionId === o.id && !inPopup.has(l.lineId));
@@ -1046,19 +1089,16 @@ ddList.addEventListener('click', e => {
 });
 function selectOption(id){
   const i = ddRow, row = pop.rows[i];
-  Object.assign(row, {optionId:id, length:'', qty:'1', discount:'', price:'', manual:false, touched:{}});
+  Object.assign(row, {optionId:id, qty:'1', discount:'', price:'', manual:false, touched:{}});
   if (i === pop.rows.length - 1) pop.rows.push(newRow());
   closeDD();
   renderRows();
-  const tr = tb.querySelector(`tr[data-i="${i}"]`);
-  if (mode(opt(id)) === 'length') tr.querySelector('[data-f=length]').focus();
-  else tr.querySelector('[data-f=qty]').select();
+  tb.querySelector(`tr[data-i="${i}"] [data-f=qty]`).select();
 }
 $('twrap').addEventListener('scroll', closeDD);
 
 const lineToRow = l => ({
   optionId:l.optionId,
-  length: opt(l.optionId) && mode(opt(l.optionId)) === 'length' ? trim(fromMM(l.lengthMM, jobUnit)) : '',
   qty:String(l.qty), discount:l.discount, price:l.manual ? l.base.toFixed(2) : '', manual:l.manual,
   taxOn:l.taxOn, rate:l.rate, lineId:l.lineId, touched:{}
 });
@@ -1074,30 +1114,21 @@ function openPopup(groupId, focusLine){
   $('metaMode').innerHTML = edit
     ? `<i class="bi bi-list-ol"></i>Showing <b>all ${pop.rows.length - 1} option lines</b> in this job, in job Seq order`
     : '<i class="bi bi-plus-circle"></i>New lines are added at the <b>end of the job</b>';
-  $('metaUnit').textContent = UL[jobUnit];
   renderRows();
   $('popup').classList.add('open');
   if (focusLine){
     const tr = tb.querySelector('tr.is-focus');
-    if (tr){ tr.scrollIntoView({block:'center'}); const f = tr.querySelector('[data-f=length]') || tr.querySelector('[data-f=qty]'); f && f.focus(); }
+    if (tr){ tr.scrollIntoView({block:'center'}); tr.querySelector('[data-f=qty]').focus(); }
   }
 }
 
-// cost follows the same rule as the selling price (unit cost per piece, or per m/ft/in × length)
-function costUnit(o, lengthMM){
-  const s = SALE[o.pricingId], mtr = (lengthMM || 0) / 1000;
-  if (mode(o) === 'length'){
-    if (s === 'per_m') return r2(mtr * o.cost);
-    if (s === 'per_ft') return r2(mtr / 0.3048 * o.cost);
-    if (s === 'per_in') return r2(mtr / 0.0254 * o.cost);
-  }
-  return o.cost || 0;
-}
+// unit cost is per unit sold (each / set / piece), same as the selling price
+const costUnit = o => costPrice(o);
 
 function buildLine(r, x){
-  const o = opt(r.optionId), m = mode(o), q = parseInt(r.qty, 10);
-  const lengthMM = m === 'length' ? toMM(parseFloat(r.length), jobUnit) : m === 'fullpiece' ? o.lpuMM : null;
-  const cu = costUnit(o, lengthMM);
+  const o = opt(r.optionId), q = parseInt(r.qty, 10);
+  const lengthMM = mode(o) === 'piece' ? o.lpuMM : null;   // length per unit (total = × qty)
+  const cu = costUnit(o);
   return {type:'option', lineId:r.lineId || ++lineSeq, optionId:o.id, name:o.name, lengthMM,
     costUnit:cu, cost:r2(cu * q), qty:q, discount:r.discount, manual:r.manual, taxOn:r.taxOn, rate:r.rate,
     unitPrice:r2(x.base / q), base:x.base, net:x.net, vatAmt:x.vat, gross:x.gross};
@@ -1156,7 +1187,8 @@ function renderGrid(){
         det = Object.entries(l.fields).slice(0, 5).map(([k2, v]) => `<span>${esc(k2)} : <b>${esc(v)}</b></span>`).join('');
       } else {
         const o = opt(l.optionId);
-        const nm = l.name + (l.lengthMM != null ? ` – ${fmtLen(l.lengthMM)}` : '');
+        const len = mm => o ? optLen(o, mm) : fmtLen(mm);
+        const nm = l.name + (l.lengthMM != null ? ` – ${len(l.lengthMM)}` : '');
         const disc = parseFloat(l.discount) > 0 ? `${trim(parseFloat(l.discount))}%` : '';
         row = `<tr data-line="${l.lineId}" class="opt-row" draggable="true">
           <td><input type="checkbox" data-nostop></td><td>${arrow(l)}</td>
@@ -1168,7 +1200,8 @@ function renderGrid(){
           <td>${disc ? disc + ' disc.' : (l.manual ? 'Manual price' : '<span class="na">-</span>')}</td>
           <td class="num">${money(l.costUnit)}</td>
           <td class="num">${money(l.net)}</td><td class="num">${vatCell(l)}</td><td class="num">${money(l.gross)}</td>${tail}</tr>`;
-        det = `<span>Length : <b>${l.lengthMM != null ? fmtLen(l.lengthMM) : '-'}</b></span><span>Qty : <b>${l.qty}</b></span>
+        det = `<span>Length per unit : <b>${l.lengthMM != null ? len(l.lengthMM) : '-'}</b></span><span>Qty : <b>${l.qty}</b></span>
+          <span>Total length : <b>${l.lengthMM != null ? len(l.lengthMM * l.qty) : '-'}</b></span>
           <span>Discount : <b>${disc || '-'}</b></span><span>Price : <b>${l.base.toFixed(2)}</b></span>
           <span>Tax : <b>${l.taxOn ? l.rate + '%' : 'Off'}</b></span><span>Gross : <b>${l.gross.toFixed(2)}</b></span>`;
       }
@@ -1324,24 +1357,37 @@ $('addOptBtn').addEventListener('click', () => openForm(null));
    OPTION SETUP: ADD / EDIT FORM
    ========================================================= */
 let form = null;
-const blankForm = () => ({id:null, name:'', code:'', supplier:SUPPLIERS[0], hasPrice:true, pricingId:1, cost:'', price:'', rate:'',
-  bands:[{upto:'1000', price:''}], hasStock:false, unitId:5, lpu:'', stockQty:'', sold:false, groupId:0, backorder:false, noMultiply:false});
+// Stock "Unit Type" is Length / Each / Set (like live); for Length the unit (cm, mm, m…) is picked next to "Length per unit"
+const str = v => v != null ? String(v) : '';
+const blankForm = () => ({id:null, name:'', code:'', supplier:SUPPLIERS[0], hasPrice:true, pricingId:1, cost:'', landed:'', suppDisc:'', spFrom:1, minSell:'',
+  acct:Object.fromEntries(ACCOUNT_TYPES.map(a => [a.id, {markup:'', price:''}])),
+  hasStock:false, unitKind:'len', lenUnitId:'2', lpu:'', cartonQty:'', minCartons:'', maxCartons:'', reorder:'', consumption:true,
+  stockRows:[], sold:false, groupId:0, backorder:false, noMultiply:false});
 function toForm(o){
   const u = unitOf(o);
   return {...blankForm(), ...o,
-    cost: o.cost != null ? String(o.cost) : '', price: o.price != null ? String(o.price) : '', rate: o.rate != null ? String(o.rate) : '',
-    bands: o.bands ? o.bands.map(b => ({upto:String(b.upto), price:String(b.price)})) : [{upto:'1000', price:''}],
+    cost:str(o.cost), landed:o.landed ? str(o.landed) : '', suppDisc:o.suppDisc ? str(o.suppDisc) : '', minSell:str(o.minSell),
+    acct:Object.fromEntries(ACCOUNT_TYPES.map(a => { const v = (o.acct || {})[a.id] || {}; return [a.id, {markup:str(v.markup), price:str(v.price)}]; })),
+    unitKind: !u || u.kind === 'len' ? 'len' : String(u.id),
+    lenUnitId: u && u.kind === 'len' ? String(u.id) : '2',
     lpu: o.lpuMM && u && u.kind === 'len' ? trim(o.lpuMM / u.f) : '',
-    stockQty: o.stockQty != null ? String(o.stockQty) : '', unitId: o.unitId || 5};
+    cartonQty:str(o.cartonQty), minCartons:str(o.minCartons), maxCartons:str(o.maxCartons), reorder:str(o.reorder),
+    stockRows:(o.stockRows || []).map(r => ({label:r.label, location:r.location, qty:str(r.qty), priority:str(r.priority)}))};
 }
+const formLenUnit = () => form.unitKind === 'len' ? UNIT_TYPES.find(u => u.id === +form.lenUnitId) : null;
+const formStockQty = () => form.stockRows.reduce((s, r) => s + (parseInt(r.qty, 10) || 0), 0);
 // form → option-shaped object (used for rules + save)
 function formOpt(){
-  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
-  return {...form, pricingId:+form.pricingId, unitId:+form.unitId,
-    cost:parseFloat(form.cost) || 0, price:parseFloat(form.price) || 0, rate:parseFloat(form.rate) || 0,
-    bands: form.bands.filter(b => parseFloat(b.upto) > 0 && b.price !== '').map(b => ({upto:parseFloat(b.upto), price:parseFloat(b.price) || 0})).sort((a,b) => a.upto - b.upto),
-    lpuMM: u && u.kind === 'len' && parseFloat(form.lpu) > 0 ? parseFloat(form.lpu) * u.f : null,
-    stockQty: parseFloat(form.stockQty) || 0};
+  const lu = formLenUnit(), num = v => v === '' ? null : parseFloat(v);
+  return {...form, pricingId:+form.pricingId,
+    unitId: form.unitKind === 'len' ? (lu ? lu.id : null) : +form.unitKind,
+    cost:parseFloat(form.cost) || 0, landed:parseFloat(form.landed) || 0, suppDisc:parseFloat(form.suppDisc) || 0,
+    spFrom:+form.spFrom, minSell:num(form.minSell),
+    acct:Object.fromEntries(ACCOUNT_TYPES.map(a => [a.id, {markup:num(form.acct[a.id].markup), price:num(form.acct[a.id].price)}])),
+    lpuMM: lu && parseFloat(form.lpu) > 0 ? parseFloat(form.lpu) * lu.f : null,
+    cartonQty:num(form.cartonQty), minCartons:num(form.minCartons), maxCartons:num(form.maxCartons), reorder:num(form.reorder),
+    stockRows: form.stockRows.map(r => ({label:r.label.trim(), location:r.location, qty:parseInt(r.qty, 10) || 0, priority:+r.priority || 1})),
+    stockQty: formStockQty()};
 }
 function openForm(id){
   form = id ? toForm(opt(id)) : blankForm();
@@ -1350,12 +1396,12 @@ function openForm(id){
   $('oform').classList.add('open');
 }
 
-const SOLD_TIP = 'Tick if this component can be sold on its own, without a finished product. Works with Fixed, Price per meter/inch/foot and Width/Drop prices. Stock On: Each/Set need Fixed pricing; Length needs "Length per unit".';
+const SOLD_TIP = 'Tick if this component can be sold on its own, without a finished product. Works with every stock unit type (Each, Set, Length). Pricing types marked * in the Pricing type list do not work for selling separately. When sold on its own it uses the selling price of the customer account type in the job (from "Selling Price Comes From") per unit. Length options are sold in pieces of "Length per unit" (no custom length).';
+// the checkbox is never disabled; a missing setup value is only shown (and blocks save while ticked)
 function soldCellHtml(){
-  const e = elig(formOpt()), lock = !e.ok && !form.sold;
-  let msg = '';
-  if (!e.ok) msg = form.sold ? `<div class="err on">Cannot save: ${esc(e.reason)}</div>` : `<div class="warn"><i class="bi bi-exclamation-triangle"></i> Not available: ${esc(e.reason)}</div>`;
-  return `<div class="cbrow"><input type="checkbox" class="cb" data-k="sold" ${form.sold ? 'checked' : ''} ${lock ? 'disabled' : ''}>
+  const e = elig(formOpt());
+  const msg = form.sold && !e.ok ? `<div class="err on">Cannot save: ${esc(e.reason)}</div>` : '';
+  return `<div class="cbrow"><input type="checkbox" class="cb" data-k="sold" ${form.sold ? 'checked' : ''}>
     <i class="bi bi-info-circle tip" data-tip="${esc(SOLD_TIP)}"></i></div>${msg}`;
 }
 function grpCellHtml(){
@@ -1368,15 +1414,12 @@ function summaryHtml(){
   const o = formOpt(), e = elig(o);
   if (!e.ok) return `<div class="sold-box bad"><i class="bi bi-exclamation-triangle"></i><div><b>Not sellable yet</b><br>${esc(e.reason)}</div></div>`;
   const u = unitOf(o);
-  const how = {
-    qty: `<b>Sold as: ${o.hasStock ? u.name : 'Each'}</b> · user enters <b>Qty</b> in the job popup`,
-    length: `<b>Sold as: Length</b> (${esc(pricingName(o.pricingId))}) · user enters <b>Length + Qty</b>; price uses the length`,
-    fullpiece: `<b>Sold as: Full bar</b> of ${u ? lenInUnit(o.lpuMM, u) : ''} · Length is locked, user enters <b>Qty</b> (bars)`
-  }[e.mode];
+  const how = e.mode === 'qty'
+    ? `<b>Sold as: ${o.hasStock ? u.name : 'Each'}</b> · ${money(sellPrice(o))} each (Trade) · user enters <b>Qty</b> in the job`
+    : `<b>Sold as: pieces of ${optLen(o, o.lpuMM)}</b> · ${money(sellPrice(o))} per piece (Trade) · user enters <b>Qty</b> only; e.g. Qty 2 = ${optLen(o, o.lpuMM * 2)}. No custom length.`;
   const stock = !o.hasStock ? 'Stock off: no stock check and no deduction in the job.'
     : e.mode === 'qty' ? `Stock check in job: Qty ≤ ${o.stockQty}.`
-    : e.mode === 'fullpiece' ? `Stock check in job: bars ≤ ${o.stockQty}. Deducts Qty × ${lenInUnit(o.lpuMM, u)}.`
-    : `Stock check in job: Length ≤ ${lenInUnit(o.lpuMM, u)} per piece and Length × Qty ≤ ${lenInUnit(o.lpuMM * o.stockQty, u)} total.`;
+    : `Stock check in job: Qty ≤ ${o.stockQty} pieces. Deducts Qty × ${optLen(o, o.lpuMM)}.`;
   return `<div class="sold-box"><i class="bi bi-bag-check"></i><div>${how}<br>${stock}</div></div>`;
 }
 function updateSold(){
@@ -1386,50 +1429,86 @@ function updateSold(){
   $('soldSummary').innerHTML = summaryHtml();
 }
 
+// Price section: same layout for every pricing type (as live Fixed): cost fields, Selling Price Comes From, price per account type
 function priceSecHtml(){
   if (!form.hasPrice) return `<div class="fnote"><i class="bi bi-info-circle"></i>Price is off. This option adds no price and cannot be sold separately.</div>`;
-  const sellIds = Object.keys(SALE).map(Number);
-  const op = p => `<option value="${p.id}" ${p.id === +form.pricingId ? 'selected' : ''}>${esc(p.name)}</option>`;
-  const s = SALE[+form.pricingId];
-  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
-  const per = !form.hasStock ? 'each' : u.kind === 'qty' ? u.name.toLowerCase() : 'bar';
-  let field = '';
-  if (s === 'fixed')
-    field = `<label>Selling price</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="price" inputmode="decimal" value="${esc(form.price)}" placeholder="0.00"><span class="add">/ ${per}</span></div></div>`;
-  else if (s === 'per_m' || s === 'per_in' || s === 'per_ft')
-    field = `<label>Selling rate</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="rate" inputmode="decimal" value="${esc(form.rate)}" placeholder="0.00"><span class="add">/ ${{per_m:'m', per_in:'in', per_ft:'ft'}[s]}</span></div></div>`;
-  else if (s === 'band')
-    field = `<label></label><div></div>
-      <label style="grid-column:1">${+form.pricingId === 4 ? 'Drop' : 'Width'} price bands</label>
-      <div class="bands"><table>
-        <thead><tr><th>Up to length (mm)</th><th>Selling price (£)</th><th style="width:40px"></th></tr></thead>
-        <tbody>${form.bands.map((b, i) => `<tr>
-          <td><input class="inp" data-b="${i}" data-bk="upto" inputmode="decimal" value="${esc(b.upto)}"></td>
-          <td><input class="inp r" data-b="${i}" data-bk="price" inputmode="decimal" value="${esc(b.price)}" placeholder="0.00"></td>
-          <td><button class="del" data-act="rmband" data-b="${i}" title="Remove band"><i class="bi bi-trash3"></i></button></td></tr>`).join('')}</tbody>
-      </table><button class="lnk" data-act="addband"><i class="bi bi-plus-lg"></i> Add band</button></div>`;
-  else
-    field = `<div class="fnote"><i class="bi bi-info-circle"></i>This pricing type is calculated from the product's width/drop or price table, so it can only be used inside products.</div>`;
+  const op = p => canSellPricing(p.id)
+    ? `<option value="${p.id}" ${p.id === +form.pricingId ? 'selected' : ''}>${esc(p.name)}</option>`
+    : `<option class="nosale" value="${p.id}" ${p.id === +form.pricingId ? 'selected' : ''} title="Does not work for Can be sold separately">${esc(p.name)} *</option>`;
+  const per = !form.hasStock ? 'each' : form.unitKind === 'len' ? 'piece' : form.unitKind === '6' ? 'set' : 'each';
+  const sep = +form.spFrom === 3, noSep = NO_SEPARATE.includes(+form.pricingId);
+  const money$ = (k, ph) => `<div class="ig"><span class="add pre">£</span><input class="r" data-k="${k}" inputmode="decimal" value="${esc(form[k])}" placeholder="${ph}"></div>`;
   return `<label>Pricing type</label>
-    <div><select class="vsel" data-k="pricingId">
-      <optgroup label="Can be sold separately">${PRICING.filter(p => sellIds.includes(p.id)).map(op).join('')}</optgroup>
-      <optgroup label="Product only (needs width/drop or price table)">${PRICING.filter(p => !sellIds.includes(p.id)).map(op).join('')}</optgroup>
-    </select></div>
-    <label>Unit cost</label><div><div class="ig"><span class="add pre">£</span><input class="r" data-k="cost" inputmode="decimal" value="${esc(form.cost)}" placeholder="0.00"></div></div>
-    ${field}`;
+    <div><select class="vsel" data-k="pricingId">${PRICING.map(op).join('')}</select>
+      <div class="hint"><span class="star">*</span> Does not work for "Can be sold separately"</div></div>
+    <label>Unit cost</label><div>${money$('cost', '0.00')}</div>
+    <label>Supplier Discount (%)</label><div><div class="ig"><input class="r" data-k="suppDisc" inputmode="decimal" value="${esc(form.suppDisc)}" placeholder="0"><span class="add">%</span></div></div>
+    <label>Landed Cost</label><div>${money$('landed', '0.00')}</div>
+    <label>Cost Price</label><div><div class="ig lock"><span class="add pre">£</span><input class="r" id="costPrice" value="${costPrice(formOpt()).toFixed(2)}" readonly></div>
+      <div class="hint">(Unit cost + Landed cost) − Supplier discount</div></div>
+    <label>Selling Price Comes From</label><div><select class="vsel" data-k="spFrom">${SP_FROM.map(x => `<option value="${x.id}" ${x.id === +form.spFrom ? 'selected' : ''} ${x.id === 3 && noSep ? 'disabled' : ''}>${x.name}</option>`).join('')}</select>
+      ${noSep ? '<div class="hint">"Separate" is not available for this pricing type.</div>' : ''}</div>
+    <label>Minimum Selling Price</label><div><div class="ig ${sep ? 'dis' : ''}"><span class="add pre">£</span><input class="r" data-k="minSell" inputmode="decimal" value="${sep ? '' : esc(form.minSell)}" placeholder="0.00" ${sep ? 'disabled' : ''}></div></div>
+    <div class="acct">
+      <table><thead><tr><th>Account type</th><th>${sep ? 'Markup' : +form.spFrom === 2 ? 'Markup (%)' : 'Markup (×)'}</th><th>Selling price / ${per}</th></tr></thead>
+      <tbody>${ACCOUNT_TYPES.map(a => { const v = form.acct[a.id]; return `<tr>
+        <td>${esc(a.name)}${a.id === JOB_ACCT ? ' <span class="tag len" title="Account type of the customer in this job">This job</span>' : ''}</td>
+        <td><div class="ig ${sep ? 'dis' : ''}"><input class="r" data-ac="${a.id}" data-af="markup" inputmode="decimal" value="${sep ? '' : esc(v.markup)}" placeholder="${sep ? '' : +form.spFrom === 2 ? '0' : '1'}" ${sep ? 'disabled' : ''}>${+form.spFrom === 2 ? '<span class="add">%</span>' : ''}</div></td>
+        <td>${sep
+          ? `<div class="ig"><span class="add pre">£</span><input class="r" data-ac="${a.id}" data-af="price" inputmode="decimal" value="${esc(v.price)}" placeholder="0.00"></div>`
+          : `<div class="ig lock"><span class="add pre">£</span><input class="r" id="sp-${a.id}" value="${spText(a.id)}" readonly></div>`}</td></tr>`; }).join('')}</tbody></table>
+      <div class="hint">${sep ? 'Separate: enter the selling price for each account type.'
+        : +form.spFrom === 2 ? 'Selling price = Cost price + Cost price × Markup %. Minimum selling price applies.'
+        : 'Selling price = Cost price × Markup (empty = 1). Minimum selling price applies.'}
+        When sold separately, the job uses the price of the customer's account type.</div>
+    </div>`;
+}
+const spText = id => { const v = sellPrice(formOpt(), id); return v == null ? '' : v.toFixed(2); };
+// Stock section: same fields and order as live "Option has stock"
+const TOTAL_TIP = 'Total units = units per carton * length per unit.';
+function cartonTotalText(){
+  const lu = formLenUnit();
+  return `${trim((parseFloat(form.cartonQty) || 0) * (parseFloat(form.lpu) || 0))} ${lu ? lu.ab : ''}`.trim();
 }
 function stockSecHtml(){
-  if (!form.hasStock) return `<div class="fnote"><i class="bi bi-info-circle"></i>Stock is off. Unit type is not needed. If sold separately: no stock check and no deduction in jobs. Pricing type alone decides Qty or Length entry.</div>`;
-  const u = UNIT_TYPES.find(u => u.id === +form.unitId);
-  const unitSel = `<label>Unit type</label><div><select class="vsel" data-k="unitId">
-      <optgroup label="Quantity">${UNIT_TYPES.filter(x => x.kind === 'qty').map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${x.name}</option>`).join('')}</optgroup>
-      <optgroup label="Length">${UNIT_TYPES.filter(x => x.kind === 'len').map(x => `<option value="${x.id}" ${x.id === u.id ? 'selected' : ''}>${x.name}</option>`).join('')}</optgroup>
-    </select></div>`;
-  if (u.kind === 'qty')
-    return `${unitSel}<label>Available qty</label><div><input class="inp r" data-k="stockQty" inputmode="numeric" value="${esc(form.stockQty)}" placeholder="0"></div>`;
-  const total = (parseFloat(form.lpu) || 0) * (parseFloat(form.stockQty) || 0);
-  return `${unitSel}<label>Length per unit</label><div><div class="ig"><input class="r" data-k="lpu" inputmode="decimal" value="${esc(form.lpu)}" placeholder="e.g. 6000"><span class="add">${u.ab}</span></div></div>
-    <label>Units in stock</label><div><input class="inp r" data-k="stockQty" inputmode="numeric" value="${esc(form.stockQty)}" placeholder="0"><div class="hint" id="lenTotal">Total length: ${trim(total)} ${u.ab}</div></div>`;
+  if (!form.hasStock) return `<div class="fnote"><i class="bi bi-info-circle"></i>Stock is off. If sold separately: sold as Each, no stock check and no deduction in jobs.</div>`;
+  const len = form.unitKind === 'len';
+  const kinds = [['len', 'Length'], ['5', 'Each'], ['6', 'Set']];
+  const ni = (k, ph) => `<input class="inp" data-k="${k}" inputmode="numeric" value="${esc(form[k])}" placeholder="${ph}">`;
+  return `<label>Unit Type</label><div><select class="vsel" data-k="unitKind">${kinds.map(([v, n]) => `<option value="${v}" ${v === form.unitKind ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <label>Units per carton</label><div>${len
+      ? `<div class="pair">${ni('cartonQty', 'Units per carton')}<input class="inp" id="ctnTotal" value="${esc(cartonTotalText())}" readonly><i class="bi bi-info-circle tip" data-tip="${TOTAL_TIP}"></i></div>`
+      : ni('cartonQty', 'Units per carton')}</div>
+    ${len ? `<label>Length per unit</label><div><div class="pair"><input class="inp" data-k="lpu" inputmode="decimal" value="${esc(form.lpu)}" placeholder="Length per unit">
+      <select class="vsel" data-k="lenUnitId"><option value="">Select</option>${UNIT_TYPES.filter(x => x.kind === 'len').map(x => `<option value="${x.id}" ${String(x.id) === form.lenUnitId ? 'selected' : ''}>${x.lbl}</option>`).join('')}</select></div></div>` : ''}
+    <label>Min cartons to order</label><div>${ni('minCartons', 'Min cartons to order')}</div>
+    <label>Max cartons to order</label><div>${ni('maxCartons', 'Max cartons to order')}</div>
+    <label>Re-Order Level</label><div>${ni('reorder', 'Re-Order Level')}</div>
+    <label>Stock Consumption</label><div class="cbrow"><input type="checkbox" class="cb" data-k="consumption" ${form.consumption ? 'checked' : ''}></div>`;
+}
+function stockFootText(){
+  const q = formStockQty(), lu = formLenUnit(), l = parseFloat(form.lpu) || 0;
+  return form.unitKind === 'len' && lu && l
+    ? `Available: <b>${q}</b> lengths × ${trim(l)} ${lu.ab} = <b>${trim(q * l)} ${lu.ab}</b>`
+    : `Available: <b>${q}</b> ${form.unitKind === '6' ? 'set' : 'each'}`;
+}
+function stockGridHtml(){
+  if (!form.hasStock) return '';
+  const lu = formLenUnit();
+  const ut = form.unitKind === 'len' ? `Length${lu && form.lpu ? ` (${trim(parseFloat(form.lpu) || 0)} ${lu.ab})` : ''}` : form.unitKind === '6' ? 'Set' : 'Each';
+  const pr = form.stockRows.map((_, i) => i + 1);
+  const rows = form.stockRows.map((r, i) => `<tr>
+      <td><input class="inp" data-sr="${i}" data-sk="label" value="${esc(r.label)}" placeholder="Label"></td>
+      <td><select class="vsel" data-sr="${i}" data-sk="location">${LOCATIONS.map(l => `<option ${l === r.location ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td><input class="inp r" data-sr="${i}" data-sk="qty" inputmode="numeric" value="${esc(r.qty)}" placeholder="0"></td>
+      <td>${esc(ut)}</td>
+      <td><select class="vsel" data-sr="${i}" data-sk="priority">${pr.map(p => `<option ${String(p) === r.priority ? 'selected' : ''}>${p}</option>`).join('')}</select></td>
+      <td><button class="del" data-act="rmstock" data-sr="${i}" title="Remove"><i class="bi bi-trash3"></i></button></td></tr>`).join('');
+  return `<div class="stk">
+    <div class="stk-top"><button class="btn btn-mag" data-act="addstock"><i class="bi bi-plus-lg"></i> Add Stock</button></div>
+    <table><thead><tr><th>Label</th><th>Location</th><th style="width:110px">Qty</th><th>Unit Type</th><th style="width:90px">Priority</th><th style="width:40px"></th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="6" class="none">No stock added. Click "Add Stock".</td></tr>'}</tbody></table>
+    <div class="stk-foot" id="stkFoot">${stockFootText()}</div></div>`;
 }
 function renderForm(){
   $('oformBody').innerHTML = `
@@ -1450,37 +1529,63 @@ function renderForm(){
     <div class="fgrid">${priceSecHtml()}</div>
     <div class="sec-bar">Stock<span class="bar-r">Option has stock <label class="sw inv"><input type="checkbox" data-k="hasStock" ${form.hasStock ? 'checked' : ''}><span></span></label></span></div>
     <div class="fgrid">${stockSecHtml()}</div>
+    ${stockGridHtml()}
     <div id="soldSummary"></div>`;
   updateSold();
 }
-const STRUCT_KEYS = ['hasPrice', 'hasStock', 'pricingId', 'unitId', 'sold'];
+const STRUCT_KEYS = ['hasPrice', 'hasStock', 'pricingId', 'spFrom', 'unitKind', 'lenUnitId', 'sold'];
+const PRICE_KEYS = ['cost', 'landed', 'suppDisc', 'minSell'];
+// cost price + worked-out selling prices update while typing (no re-render, keeps focus)
+function refreshPrices(){
+  if ($('costPrice')) $('costPrice').value = costPrice(formOpt()).toFixed(2);
+  ACCOUNT_TYPES.forEach(a => { const el = $('sp-' + a.id); if (el) el.value = spText(a.id); });
+}
+const INT_KEYS = ['cartonQty', 'minCartons', 'maxCartons', 'reorder'];
+// live values that depend on carton qty / length per unit / stock rows
+function refreshStockTotals(){
+  if ($('ctnTotal')) $('ctnTotal').value = cartonTotalText();
+  if ($('stkFoot')) $('stkFoot').innerHTML = stockFootText();
+}
 $('oformBody').addEventListener('input', e => {
   const t = e.target;
-  if (t.dataset.b != null){ form.bands[+t.dataset.b][t.dataset.bk] = cleanNum(t.value); if (t.value !== form.bands[+t.dataset.b][t.dataset.bk]) t.value = form.bands[+t.dataset.b][t.dataset.bk]; updateSold(); return; }
+  if (t.dataset.ac != null){
+    const v = cleanNum(t.value); if (v !== t.value) t.value = v;
+    form.acct[t.dataset.ac][t.dataset.af] = v;
+    refreshPrices(); updateSold(); return;
+  }
+  if (t.dataset.sr != null && t.tagName === 'INPUT'){
+    let v = t.value;
+    if (t.dataset.sk === 'qty'){ v = v.replace(/\D/g, ''); if (v !== t.value) t.value = v; }
+    form.stockRows[+t.dataset.sr][t.dataset.sk] = v;
+    refreshStockTotals(); updateSold(); return;
+  }
   const k = t.dataset.k;
   if (!k || t.type === 'checkbox' || t.tagName === 'SELECT') return;
-  if (['cost','price','rate','lpu'].includes(k)){ const v = cleanNum(t.value); if (v !== t.value) t.value = v; }
-  if (k === 'stockQty'){ const v = t.value.replace(/\D/g, ''); if (v !== t.value) t.value = v; }
+  if (['lpu', ...PRICE_KEYS].includes(k)){ const v = cleanNum(t.value); if (v !== t.value) t.value = v; }
+  if (INT_KEYS.includes(k)){ const v = t.value.replace(/\D/g, ''); if (v !== t.value) t.value = v; }
   form[k] = t.value;
   if (k === 'name') { $('nameErr').classList.remove('on'); t.classList.remove('invalid'); }
-  if ((k === 'lpu' || k === 'stockQty') && $('lenTotal')){
-    const u = UNIT_TYPES.find(u => u.id === +form.unitId);
-    $('lenTotal').textContent = `Total length: ${trim((parseFloat(form.lpu) || 0) * (parseFloat(form.stockQty) || 0))} ${u.ab}`;
-  }
+  if (k === 'lpu' || k === 'cartonQty') refreshStockTotals();
+  if (PRICE_KEYS.includes(k)) refreshPrices();
   updateSold();
 });
 $('oformBody').addEventListener('change', e => {
   const t = e.target, k = t.dataset.k;
+  if (t.dataset.sr != null && t.tagName === 'SELECT'){ form.stockRows[+t.dataset.sr][t.dataset.sk] = t.value; return; }
   if (!k) return;
   if (t.type === 'checkbox') form[k] = t.checked;
-  else if (t.tagName === 'SELECT') form[k] = k === 'supplier' ? t.value : +t.value;
+  else if (t.tagName === 'SELECT') form[k] = ['supplier', 'unitKind', 'lenUnitId'].includes(k) ? t.value : +t.value;
   else return;
+  // live: Separate is not offered for Perimeter / Price based on quantity → back to Cost * Markup
+  if (k === 'pricingId' && NO_SEPARATE.includes(form.pricingId) && +form.spFrom === 3) form.spFrom = 1;
+  // live: choosing Separate clears the selling prices and Minimum selling price (they are typed again per account type)
+  if (k === 'spFrom' && form.spFrom === 3){ ACCOUNT_TYPES.forEach(a => form.acct[a.id].price = ''); form.minSell = ''; }
   if (STRUCT_KEYS.includes(k)) renderForm();
 });
 $('oformBody').addEventListener('click', e => {
   const a = e.target.closest('[data-act]');
-  if (a && a.dataset.act === 'addband'){ form.bands.push({upto:'', price:''}); renderForm(); return; }
-  if (a && a.dataset.act === 'rmband'){ form.bands.splice(+a.dataset.b, 1); if (!form.bands.length) form.bands.push({upto:'', price:''}); renderForm(); return; }
+  if (a && a.dataset.act === 'addstock'){ form.stockRows.push({label:'', location:LOCATIONS[0], qty:'', priority:String(form.stockRows.length + 1)}); renderForm(); return; }
+  if (a && a.dataset.act === 'rmstock'){ form.stockRows.splice(+a.dataset.sr, 1); renderForm(); return; }
   const gs = e.target.closest('#grpSel');
   if (gs) openGdd(gs);
 });
@@ -1489,14 +1594,19 @@ $('oformSave').addEventListener('click', () => {
   if (!o.name.trim()){ $('nameErr').classList.add('on'); document.querySelector('[data-k=name]').classList.add('invalid'); toast('Enter option name', true); return; }
   const e = elig(o);
   if (o.sold && !e.ok){ toast('Untick "Can be sold separately" or fix: ' + e.reason, true); return; }
+  const st = o.hasStock;
   const rec = {id: form.id || Math.max(...OPTIONS.map(x => x.id)) + 1, name:o.name.trim(), code:(o.code || '').trim(), supplier:o.supplier,
-    hasPrice:o.hasPrice, pricingId:o.pricingId, cost:o.cost, price:o.price, rate:o.rate, bands:o.bands,
-    hasStock:o.hasStock, unitId:o.hasStock ? o.unitId : null, lpuMM:o.hasStock ? o.lpuMM : null, stockQty:o.hasStock ? o.stockQty : null,
+    hasPrice:o.hasPrice, pricingId:o.pricingId, cost:o.cost, landed:o.landed, suppDisc:o.suppDisc,
+    spFrom:o.spFrom, minSell:o.spFrom === 3 ? null : o.minSell, acct:o.acct,
+    hasStock:st, unitId:st ? o.unitId : null, lpuMM:st ? o.lpuMM : null, stockQty:st ? o.stockQty : null,
+    cartonQty:o.cartonQty, minCartons:o.minCartons, maxCartons:o.maxCartons, reorder:o.reorder, consumption:o.consumption,
+    stockRows:st ? o.stockRows : [],
     sold:o.sold, groupId:G(o.groupId) ? o.groupId : 0, backorder:o.backorder, noMultiply:o.noMultiply};
   const i = OPTIONS.findIndex(x => x.id === rec.id);
   if (i < 0) OPTIONS.push(rec); else OPTIONS[i] = rec;
   closeModal('oform');
   renderOptionList();
+  if ($('popup').classList.contains('open')) renderRows();   // opened from the job popup's edit icon
   toast(`Option "${rec.name}" saved${rec.sold ? ' · sellable in Job › Add product › ' + topGroup(rec.groupId) : ''}`);
 });
 
@@ -1808,13 +1918,13 @@ document.addEventListener('keydown', e => {
     fields:{'Unit Type':'mm', 'Quantity':'5', 'Supplier':'Markilux', 'Width':'1200 mm', 'Drop':'1500 mm', 'Extras':'Screws,Brackets,Endcaps,Bottom Bar', 'Control Side':'Left', 'Product Type':'Select'},
     cost:437.50, qty:5, net:460, taxOn:true, rate:20, vatAmt:92, gross:552});
   addOptions([
-    {...newRow(), optionId:40, length:'2500', qty:'2', discount:'10'},
+    {...newRow(), optionId:40, qty:'2', discount:'10'},
     {...newRow(), optionId:1,  qty:'2', taxOn:false}
   ]);
   addProduct({name:'Ad New', recipe:'Test', desc:'Test, Markilux, 50, 50, Blind',
     fields:{'Location':'Test', 'Unit Type':'Inches', 'Supplier':'Markilux', 'Quantity':'1', 'Width':'50', 'Drop':'50', 'Product Type':'Select', 'pgr2':'Select'},
     cost:50, qty:1, net:50, taxOn:true, rate:20, vatAmt:10, gross:60});
-  addOptions([{...newRow(), optionId:31, length:'1800', qty:'4', rate:5}]);
+  addOptions([{...newRow(), optionId:31, qty:'4', rate:5}, {...newRow(), optionId:50, qty:'2'}]);
   renderAddMenu();
   renderGrid();
   renderOptionList();
